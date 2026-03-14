@@ -9,8 +9,8 @@ X11 窗口信息获取模块
 import re
 from typing import Dict, List, Optional
 
-from .base import WindowInfoProvider
-from ..utils import CmdCtl, logger
+from relative_position.linux.base import WindowInfoProvider
+from relative_position.utils import CmdCtl, logger
 
 
 class X11WindowInfo(WindowInfoProvider):

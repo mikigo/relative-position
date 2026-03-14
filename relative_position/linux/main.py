@@ -12,12 +12,12 @@ try:
 except ImportError:
     dbus = None
 
-from ..config import GlobalConfig
-from ..utils import logger, CmdCtl, ShortCut
-from ..exceptions import ApplicationStartError, GetWindowInformation, NoSetReferencePoint
-from .base import ButtonCenterBase
-from .wayland_wininfo import WaylandWindowInfo
-from .x11_wininfo import X11WindowInfo
+from relative_position.config import config
+from relative_position.utils import logger, CmdCtl, ShortCut
+from relative_position.exceptions import ApplicationStartError, GetWindowInformation, NoSetReferencePoint
+from relative_position.linux.base import ButtonCenterBase
+from relative_position.linux.wayland_wininfo import WaylandWindowInfo
+from relative_position.linux.x11_wininfo import X11WindowInfo
 
 
 class ButtonCenter(ButtonCenterBase):
@@ -41,19 +41,19 @@ class ButtonCenter(ButtonCenterBase):
 
     def _init_window_provider(self):
         """根据平台初始化窗口信息提供者"""
-        if GlobalConfig.IS_X11:
+        if config.IS_X11:
             self.window_provider = X11WindowInfo()
-        elif GlobalConfig.IS_WAYLAND:
+        elif config.IS_WAYLAND:
             self.window_provider = WaylandWindowInfo()
         else:
-            raise RuntimeError(f"不支持的显示服务器: {GlobalConfig.get_display_server()}")
+            raise RuntimeError(f"不支持的显示服务器: {config.get_display_server()}")
 
     def window_info(self):
         """
          窗口信息
         :return:  窗口的基本信息，左上角坐标，窗口宽高等
         """
-        if GlobalConfig.IS_X11:
+        if config.IS_X11:
             try:
                 window_id = self.window_provider.get_window_id_by_index(self.app_name, self.number)
                 if window_id is None:
@@ -68,7 +68,7 @@ class ButtonCenter(ButtonCenterBase):
             except Exception as exc:
                 raise ApplicationStartError(f"{self.app_name, exc}") from exc
 
-        elif GlobalConfig.IS_WAYLAND:
+        elif config.IS_WAYLAND:
             self.wwininfo = WaylandWindowInfo()
             if hasattr(self.wwininfo.library, "GetAllWindowStatesList"):
                 for _ in range(self.retry + 1):
@@ -97,7 +97,7 @@ class ButtonCenter(ButtonCenterBase):
         :return:
         """
         try:
-            if GlobalConfig.IS_X11:
+            if config.IS_X11:
                 app_window_info = self.window_info()
                 return app_window_info.get("location")
             else:
@@ -128,7 +128,7 @@ class ButtonCenter(ButtonCenterBase):
         :return:  (0, 0)
         """
         try:
-            if GlobalConfig.IS_X11:
+            if config.IS_X11:
                 app_window_info = self.window_info()
                 location = app_window_info.get("location")
                 window_x, window_y = location[0], location[1]
@@ -151,7 +151,7 @@ class ButtonCenter(ButtonCenterBase):
         :return:  (宽， 高)， 例如：(400, 600)
         """
         try:
-            if GlobalConfig.IS_X11:
+            if config.IS_X11:
                 app_window_info = self.window_info()
                 location = app_window_info.get("location")
                 window_width = location[2]
@@ -559,7 +559,7 @@ class ButtonCenter(ButtonCenterBase):
         :param name: 应用包名
         :return: int 窗口数量
         """
-        if GlobalConfig.IS_X11:
+        if config.IS_X11:
             info = self.window_provider.get_windows_by_name(name)
             if info is None:
                 return 0
@@ -582,7 +582,7 @@ class ButtonCenter(ButtonCenterBase):
         :param name: 应用包名
         :return: 窗口编号列表
         """
-        if GlobalConfig.IS_X11:
+        if config.IS_X11:
             info = self.window_provider.get_windows_by_name(name)
             if info is None:
                 raise ApplicationStartError(name)
@@ -606,7 +606,7 @@ class ButtonCenter(ButtonCenterBase):
         """
         app_name = app_name if app_name else self.app_name
 
-        if GlobalConfig.IS_WAYLAND:
+        if config.IS_WAYLAND:
             return
 
         window_id = self.window_provider.get_window_id_by_index(app_name, self.number)
@@ -619,7 +619,7 @@ class ButtonCenter(ButtonCenterBase):
          获取应用的所有窗口编号，并返回编号最大的窗口ID
         :return: 返回最新创建的窗口编号
         """
-        if GlobalConfig.IS_X11:
+        if config.IS_X11:
             window_id = self.window_provider.get_window_id_by_index(app_name, -1)
             if window_id is None:
                 raise ApplicationStartError(app_name)

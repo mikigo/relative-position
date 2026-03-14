@@ -11,10 +11,9 @@ import ctypes
 from configparser import ConfigParser, NoSectionError
 from time import sleep
 
-from ..utils import logger, CmdCtl, ShortCut
-from ..exceptions import ApplicationStartError, GetWindowInformation, NoSetReferencePoint
-from ..config import GlobalConfig
-from .windows_wininfo import WindowsWindowInfo
+from relative_position.utils import logger, CmdCtl, ShortCut
+from relative_position.exceptions import ApplicationStartError, GetWindowInformation, NoSetReferencePoint
+from relative_position.windows.windows_wininfo import WindowsWindowInfo
 
 
 class ButtonCenter:
@@ -23,20 +22,49 @@ class ButtonCenter:
     """
 
     def __init__(
-        self, app_name: str, config_path: str, number: int = -1, pause: int = 1, retry: int = 1
+        self, app_name: str, config_path, number: int = -1, pause: int = 1, retry: int = 1
     ):
         """
         :param app_name: 系统应用软件包，例如，notepad.exe
-        :param config_path: ui 定位配置文件路径（绝对路径）
+        :param config_path: ui 定位配置文件路径（绝对路径）或 Elements 对象
         :param number: 默认为 -1, 即最后一个窗口
             如果你想指定不同的窗口，你可以在实例化对象的时候显式的传入 number，第一个为 0
+        :param pause: 每个操作步骤之前暂停的时间
+        :param retry: 重试次数
         """
         self.app_name = app_name
         self.number = number
-        # 每个操作步骤之前暂停的时间
         self.pause = pause
         self.config_path = config_path
         self.retry = retry
+        self._elements_dict = self._parse_config(config_path)
+
+    def _parse_config(self, config):
+        """
+        解析配置，支持 Ele 对象和 INI 文件
+
+        :param config: 配置文件路径或 Elements 对象
+        :return: 元素字典
+        """
+        from relative_position.elements import Elements
+
+        if isinstance(config, Elements):
+            return config.to_dict()
+        elif isinstance(config, str):
+            conf = ConfigParser()
+            conf.read(config)
+            result = {}
+            for section in conf.sections():
+                result[section] = {
+                    'direction': conf.get(section, 'direction'),
+                    'location': [int(i.strip()) for i in conf.get(section, 'location').split(',')]
+                }
+            return result
+        elif isinstance(config, dict):
+            return config
+        else:
+            raise ValueError(f"不支持的配置类型: {type(config)}. "
+                           "请提供 Ele 对象、Elements 对象、INI 文件路径或字典")
 
     def window_info(self):
         """
@@ -365,19 +393,14 @@ class ButtonCenter:
         """
         btn_x = btn_y = ""
         sleep(self.pause)
-        conf = ConfigParser()
-        if isinstance(self.config_path, list):
-            for config in self.config_path:
-                conf.read(config)
-        elif isinstance(self.config_path, str):
-            conf.read(self.config_path)
-        else:
-            raise ValueError
-        try:
-            direction = conf.get(btn_name, "direction")
-        except NoSectionError:
-            raise NoSectionError(f"在 [{self.config_path}] 文件中没有配置 '{btn_name}'")
-        position = [int(i.strip()) for i in conf.get(btn_name, "location").split(",")]
+
+        if btn_name not in self._elements_dict:
+            raise ValueError(f"元素 '{btn_name}' 未在配置中找到")
+
+        element_config = self._elements_dict[btn_name]
+        direction = element_config['direction']
+        position = element_config['location']
+
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
             "top_center",
@@ -434,12 +457,16 @@ class ButtonCenter:
         :param multiplier_y
             offset_y 移动的倍数
         """
-        btn_x = btn_y = button_w = button_y = ""
+        btn_x = btn_y = button_w = button_h = ""
         sleep(self.pause)
-        conf = ConfigParser()
-        conf.read(self.config_path)
-        direction = conf.get(btn_name, "direction")
-        position = [int(i.strip()) for i in conf.get(btn_name, "location").split(",")]
+
+        if btn_name not in self._elements_dict:
+            raise ValueError(f"元素 '{btn_name}' 未在配置中找到")
+
+        element_config = self._elements_dict[btn_name]
+        direction = element_config['direction']
+        position = element_config['location']
+
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
             "top_center",
@@ -475,10 +502,12 @@ class ButtonCenter:
         :param btn_name: 控件名称
         :return: (相对坐标，参考系）
         """
-        conf = ConfigParser()
-        conf.read(self.config_path)
-        direction = conf.get(btn_name, "direction")
-        position = [int(i.strip()) for i in conf.get(btn_name, "location").split(",")]
+        if btn_name not in self._elements_dict:
+            raise ValueError(f"元素 '{btn_name}' 未在配置中找到")
+
+        element_config = self._elements_dict[btn_name]
+        direction = element_config['direction']
+        position = element_config['location']
         return position, direction
 
     def get_windows_number(self, name: str) -> int:

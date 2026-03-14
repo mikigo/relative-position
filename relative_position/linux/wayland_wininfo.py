@@ -7,10 +7,10 @@ from time import sleep
 from platform import machine
 import ctypes
 
-from ..config import GlobalConfig
+from relative_position.config import config
 
 # wayland PATH
-if GlobalConfig.IS_WAYLAND:
+if config.IS_WAYLAND:
     os.environ["QT_WAYLAND_SHELL_INTEGRATION"] = "kwayland-shell"
     os.environ["XDG_SESSION_DESKTOP"] = "Wayland"
     os.environ["XDG_SESSION_TYPE"] = "wayland"
@@ -73,9 +73,9 @@ class WaylandWindowInfo:
 
     def __init__(self):
         self.library = ctypes.cdll.LoadLibrary(f"/usr/lib/{machine()}-linux-gnu/libdtkwmjack.so")
-        if not GlobalConfig.DTK_DISPLAY:
+        if not config.DTK_DISPLAY:
             self.init_dtk_display()
-            GlobalConfig.DTK_DISPLAY = True
+            config.DTK_DISPLAY = True
 
     def init_dtk_display(self):
         self.library.InitDtkWmDisplay()

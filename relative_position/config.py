@@ -5,8 +5,8 @@ import sys
 import os
 
 
-class GlobalConfig:
-    """全局配置"""
+class _Config:
+    """内部配置类"""
 
     @staticmethod
     def _get_display_server():
@@ -47,7 +47,7 @@ class GlobalConfig:
 
 
 # 创建全局实例
-config = GlobalConfig()
+config = _Config()
 IS_WAYLAND = config.IS_WAYLAND
 IS_X11 = config.IS_X11
 IS_WINDOWS = config.IS_WINDOWS

@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "relative-position"
+version = "0.1.0"
+description = "跨平台相对元素定位库 - 获取桌面应用中元素在屏幕中的坐标"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "MIT"}
+authors = [
+    {name = "mikigo", email = "1964191531@qq.com"}
+]
+keywords = [
+    "window",
+    "position",
+    "automation",
+    "gui",
+    "cross-platform",
+    "x11",
+    "wayland",
+    "windows"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Desktop Environment",
+]
+
+[project.urls]
+Homepage = "https://github.com/mikigo/relative-position"
+Repository = "https://github.com/mikigo/relative-position"
+Issues = "https://github.com/mikigo/relative-position/issues"
+
+[project.dependencies]
+psutil = {version = ">=5.9.0", markers = "sys_platform == 'win32'"}
+dbus-python = {version = ">=1.3.2", markers = "sys_platform == 'linux'"}
+
+[tool.setuptools]
+packages = ["relative_position"]
+
+[tool.setuptools.package-data]
+relative_position = ["*.ini", "*.txt"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["tests/*", "examples/*", "*.pyc", "__pycache__"]

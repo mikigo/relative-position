@@ -5,7 +5,7 @@
 Windows平台窗口信息获取模块
 """
 
-from .windows_wininfo import WindowsWindowInfo
-from .main import ButtonCenter
+from relative_position.windows.windows_wininfo import WindowsWindowInfo
+from relative_position.windows.main import ButtonCenter
 
 __all__ = ['WindowsWindowInfo', 'ButtonCenter']
