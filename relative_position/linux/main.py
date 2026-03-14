@@ -2,10 +2,9 @@
 # _*_ coding:utf-8 _*_
 
 
-import re
 import sys
-from configparser import ConfigParser, NoSectionError
 from time import sleep
+from typing import Optional, Union
 
 try:
     import dbus
@@ -14,7 +13,7 @@ except ImportError:
 
 from relative_position.config import config
 from relative_position.utils import logger, CmdCtl, ShortCut
-from relative_position.exceptions import ApplicationStartError, GetWindowInformation, NoSetReferencePoint
+from relative_position.exceptions import ApplicationStartError, GetWindowInformation
 from relative_position.linux.base import ButtonCenterBase
 from relative_position.linux.wayland_wininfo import WaylandWindowInfo
 from relative_position.linux.x11_wininfo import X11WindowInfo
@@ -415,41 +414,31 @@ class ButtonCenter(ButtonCenterBase):
 
     def btn_center(
         self,
-        btn_name,
-        offset_x=None,
-        multiplier_x=None,
-        offset_y=None,
-        multiplier_y=None,
+        btn_name: str,
+        offset_x: Optional[Union[int, float]] = None,
+        multiplier_x: Optional[Union[int, float]] = None,
+        offset_y: Optional[Union[int, float]] = None,
+        multiplier_y: Optional[Union[int, float]] = None,
     ) -> tuple:
         """
-         获取元素的中心坐标
+        获取元素的中心坐标
         :param btn_name: 控件名
-        :param offset_x
-            正数为右移动
-            负数为左移动
-        :param multiplier_x
-            offset_x 移动的倍数
-        :param offset_y
-            正数为上移动
-            负数为下移动
-        :param multiplier_y
-            offset_y 移动的倍数
+        :param offset_x: 正数为右移动，负数为左移动
+        :param multiplier_x: offset_x 移动的倍数
+        :param offset_y: 正数为上移动，负数为下移动
+        :param multiplier_y: offset_y 移动的倍数
+        :return: 元素中心坐标 (x, y)
         """
         btn_x = btn_y = ""
         sleep(self.pause)
-        conf = ConfigParser()
-        if isinstance(self.config_path, list):
-            for config in self.config_path:
-                conf.read(config)
-        elif isinstance(self.config_path, str):
-            conf.read(self.config_path)
-        else:
-            raise ValueError
-        try:
-            direction = conf.get(btn_name, "direction")
-        except NoSectionError:
-            raise NoSectionError(f"在 [{self.config_path}] 文件中没有配置 '{btn_name}'")
-        position = [int(i.strip()) for i in conf.get(btn_name, "location").split(",")]
+
+        if btn_name not in self._elements_dict:
+            raise ValueError(f"元素 '{btn_name}' 未在配置中找到")
+
+        element_config = self._elements_dict[btn_name]
+        direction = element_config['direction']
+        position = element_config['location']
+
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
             "top_center",
@@ -457,22 +446,18 @@ class ButtonCenter(ButtonCenterBase):
             "left_center",
             "right_center",
         )
+
         if direction in default_point:
             btn_x, btn_y = getattr(self, f"btn_center_by_{direction}")(*position)
         elif direction in default_boundary_point:
             window_x, window_y = getattr(self, f"window_{direction}_position")()
-            # pylint: disable=eval-used
-            btn_x = eval(
-                f"{window_x} + {position[0]} {'+' if position[0] > 0 else '-'} {position[2] / 2}"
-            )
-            # pylint: disable=eval-used
-            btn_y = eval(
-                f"{window_y} + {position[1]} {'+' if position[1] > 0 else '-'} {position[3] / 2}"
-            )
+            btn_x = window_x + position[0] + (position[2] / 2 if position[0] > 0 else -position[2] / 2)
+            btn_y = window_y + position[1] + (position[3] / 2 if position[1] > 0 else -position[3] / 2)
         elif direction == "window_size":
-            btn_x, btn_y, button_w, button_y = self.window_location_and_sizes()
+            btn_x, btn_y, button_w, button_h = self.window_location_and_sizes()
             btn_x = btn_x + button_w / 2
-            btn_y = btn_y + button_y / 2
+            btn_y = btn_y + button_h / 2
+
         if btn_x and btn_y:
             if offset_x:
                 btn_x = btn_x + int(offset_x) * (int(multiplier_x) if multiplier_x else 1)
@@ -480,38 +465,38 @@ class ButtonCenter(ButtonCenterBase):
                 btn_y = btn_y + int(offset_y) * (int(multiplier_y) if multiplier_y else 1)
             logger.debug(f"[{btn_name}] 坐标：{str(btn_x)}, {str(btn_y)})")
             return btn_x, btn_y
-        raise NoSetReferencePoint(
+
+        raise ValueError(
             f"{direction}, 默认参考点 {default_point + default_boundary_point}"
         )
 
     def btn_size(
         self,
         btn_name: str,
-        offset_x: [int, float] = None,
-        multiplier_x: [int, float] = None,
-        offset_y: [int, float] = None,
-        multiplier_y: [int, float] = None,
+        offset_x: Optional[Union[int, float]] = None,
+        multiplier_x: Optional[Union[int, float]] = None,
+        offset_y: Optional[Union[int, float]] = None,
+        multiplier_y: Optional[Union[int, float]] = None,
     ) -> tuple:
         """
-         获取元素的左上角坐标及长宽
+        获取元素的左上角坐标及长宽
         :param btn_name: 控件名
-        :param offset_x
-            正数为右移动
-            负数为左移动
-        :param multiplier_x
-            offset_x 移动的倍数
-        :param offset_y
-            正数为上移动
-            负数为下移动
-        :param multiplier_y
-            offset_y 移动的倍数
+        :param offset_x: 正数为右移动，负数为左移动
+        :param multiplier_x: offset_x 移动的倍数
+        :param offset_y: 正数为上移动，负数为下移动
+        :param multiplier_y: offset_y 移动的倍数
+        :return: (x, y, width, height)
         """
-        btn_x = btn_y = button_w = button_y = ""
+        btn_x = btn_y = button_w = button_h = ""
         sleep(self.pause)
-        conf = ConfigParser()
-        conf.read(self.config_path)
-        direction = conf.get(btn_name, "direction")
-        position = [int(i.strip()) for i in conf.get(btn_name, "location").split(",")]
+
+        if btn_name not in self._elements_dict:
+            raise ValueError(f"元素 '{btn_name}' 未在配置中找到")
+
+        element_config = self._elements_dict[btn_name]
+        direction = element_config['direction']
+        position = element_config['location']
+
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
             "top_center",
@@ -519,38 +504,43 @@ class ButtonCenter(ButtonCenterBase):
             "left_center",
             "right_center",
         )
+
         if direction in default_point:
-            btn_x, btn_y, button_w, button_y = getattr(self, f"btn_pic_by_{direction}")(*position)
+            btn_x, btn_y, button_w, button_h = getattr(self, f"btn_pic_by_{direction}")(*position)
         elif direction in default_boundary_point:
             window_x, window_y = getattr(self, f"window_{direction}_position")()
             btn_x = window_x + position[0] - (0 if position[0] > 0 else position[2])
             btn_y = window_y + position[1] - (0 if position[1] > 0 else position[3])
-            button_w, button_y = position[2], position[3]
+            button_w, button_h = position[2], position[3]
         elif direction == "window_size":
-            btn_x, btn_y, button_w, button_y = self.window_location_and_sizes()
+            btn_x, btn_y, button_w, button_h = self.window_location_and_sizes()
+
         if btn_x != "" and btn_y != "":
             if offset_x:
                 btn_x = btn_x + int(offset_x) * (int(multiplier_x) if multiplier_x else 1)
             if offset_y:
                 btn_y = btn_y + int(offset_y) * (int(multiplier_y) if multiplier_y else 1)
             logger.debug(
-                f"[{btn_name}] 左上角坐标：{str(btn_x)}, {str(btn_y)}), 长宽 {button_w, button_y}"
+                f"[{btn_name}] 左上角坐标：{str(btn_x)}, {str(btn_y)}), 长宽 {button_w, button_h}"
             )
-            return btn_x, btn_y, button_w, button_y
-        raise NoSetReferencePoint(
+            return btn_x, btn_y, button_w, button_h
+
+        raise ValueError(
             f"{direction}, 默认参考点 {default_point + default_boundary_point}"
         )
 
     def btn_info(self, btn_name: str) -> tuple:
         """
-         元素的相对位置和参考系
+        元素的相对位置和参考系
         :param btn_name: 控件名称
         :return: (相对坐标，参考系）
         """
-        conf = ConfigParser()
-        conf.read(self.config_path)
-        direction = conf.get(btn_name, "direction")
-        position = [int(i.strip()) for i in conf.get(btn_name, "location").split(",")]
+        if btn_name not in self._elements_dict:
+            raise ValueError(f"元素 '{btn_name}' 未在配置中找到")
+
+        element_config = self._elements_dict[btn_name]
+        direction = element_config['direction']
+        position = element_config['location']
         return position, direction
 
     def get_windows_number(self, name: str) -> int:

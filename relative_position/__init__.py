@@ -13,8 +13,7 @@ from relative_position.config import config, IS_WAYLAND, IS_X11, IS_WINDOWS
 from relative_position.exceptions import (
     ApplicationStartError,
     ApplicationError,
-    GetWindowInformation,
-    NoSetReferencePoint
+    GetWindowInformation
 )
 from relative_position.utils import logger, CmdCtl, ShortCut
 from relative_position.elements import Ele, Elements
@@ -65,7 +64,6 @@ __all__ = [
     'ApplicationStartError',
     'ApplicationError',
     'GetWindowInformation',
-    'NoSetReferencePoint',
     'logger',
     'CmdCtl',
     'ShortCut',

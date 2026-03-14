@@ -40,7 +40,7 @@ class ButtonCenterBase(ABC):
     def __init__(self, app_name: str, config_path, number: int = -1, pause: int = 1, retry: int = 1):
         """
         :param app_name: 系统应用软件包
-        :param config_path: ui 定位配置文件路径（绝对路径）或 Elements 对象
+        :param config_path: Ele 对象、Elements 对象或字典（INI 文件已不再支持）
         :param number: 默认为 -1, 即最后一个窗口
             如果你想指定不同的窗口，你可以在实例化对象的时候显式的传入 number，第一个为 0
         :param pause: 每个操作步骤之前暂停的时间
@@ -55,33 +55,20 @@ class ButtonCenterBase(ABC):
 
     def _parse_config(self, config):
         """
-        解析配置，支持 Ele 对象和 INI 文件
+        解析配置，仅支持 Ele 对象、Elements 对象或字典
 
-        :param config: 配置文件路径或 Elements 对象
+        :param config: Ele 对象、Elements 对象或字典
         :return: 元素字典
         """
         from relative_position.elements import Elements
 
         if isinstance(config, Elements):
             return config.to_dict()
-        elif isinstance(config, str):
-            from configparser import ConfigParser
-            conf = ConfigParser()
-            conf.read(config)
-            result = {}
-            for section in conf.sections():
-                result[section] = {
-                    'direction': conf.get(section, 'direction'),
-                    'location': [int(i.strip()) for i in conf.get(section, 'location').split(',')]
-                }
-            return result
         elif isinstance(config, dict):
             return config
         else:
             raise ValueError(f"不支持的配置类型: {type(config)}. "
-                           "请提供 Ele 对象、Elements 对象、INI 文件路径或字典")
-        self._elements_dict = self._parse_config(config_path)
-
+                           "请提供 Ele 对象、Elements 对象或字典（INI 文件已不再支持）")
     @abstractmethod
     def window_info(self):
         """

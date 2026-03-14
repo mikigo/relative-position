@@ -6,13 +6,12 @@ Windows平台相对元素定位模块
 根据应用程序中控件元素的相对坐标，通过配置元素的x、y、w和h来定位元素在屏幕中的位置
 """
 
-import re
 import ctypes
-from configparser import ConfigParser, NoSectionError
 from time import sleep
+from typing import Optional, Union
 
 from relative_position.utils import logger, CmdCtl, ShortCut
-from relative_position.exceptions import ApplicationStartError, GetWindowInformation, NoSetReferencePoint
+from relative_position.exceptions import ApplicationStartError, GetWindowInformation
 from relative_position.windows.windows_wininfo import WindowsWindowInfo
 
 
@@ -26,7 +25,7 @@ class ButtonCenter:
     ):
         """
         :param app_name: 系统应用软件包，例如，notepad.exe
-        :param config_path: ui 定位配置文件路径（绝对路径）或 Elements 对象
+        :param config_path: Ele 对象、Elements 对象或字典（INI 文件已不再支持）
         :param number: 默认为 -1, 即最后一个窗口
             如果你想指定不同的窗口，你可以在实例化对象的时候显式的传入 number，第一个为 0
         :param pause: 每个操作步骤之前暂停的时间
@@ -41,30 +40,20 @@ class ButtonCenter:
 
     def _parse_config(self, config):
         """
-        解析配置，支持 Ele 对象和 INI 文件
+        解析配置，仅支持 Ele 对象、Elements 对象或字典
 
-        :param config: 配置文件路径或 Elements 对象
+        :param config: Ele 对象、Elements 对象或字典
         :return: 元素字典
         """
         from relative_position.elements import Elements
 
         if isinstance(config, Elements):
             return config.to_dict()
-        elif isinstance(config, str):
-            conf = ConfigParser()
-            conf.read(config)
-            result = {}
-            for section in conf.sections():
-                result[section] = {
-                    'direction': conf.get(section, 'direction'),
-                    'location': [int(i.strip()) for i in conf.get(section, 'location').split(',')]
-                }
-            return result
         elif isinstance(config, dict):
             return config
         else:
             raise ValueError(f"不支持的配置类型: {type(config)}. "
-                           "请提供 Ele 对象、Elements 对象、INI 文件路径或字典")
+                           "请提供 Ele 对象、Elements 对象或字典（INI 文件已不再支持）")
 
     def window_info(self):
         """
@@ -371,25 +360,20 @@ class ButtonCenter:
 
     def btn_center(
         self,
-        btn_name,
-        offset_x=None,
-        multiplier_x=None,
-        offset_y=None,
-        multiplier_y=None,
+        btn_name: str,
+        offset_x: Optional[Union[int, float]] = None,
+        multiplier_x: Optional[Union[int, float]] = None,
+        offset_y: Optional[Union[int, float]] = None,
+        multiplier_y: Optional[Union[int, float]] = None,
     ) -> tuple:
         """
-         获取元素的中心坐标
+        获取元素的中心坐标
         :param btn_name: 控件名
-        :param offset_x
-            正数为右移动
-            负数为左移动
-        :param multiplier_x
-            offset_x 移动的倍数
-        :param offset_y
-            正数为上移动
-            负数为下移动
-        :param multiplier_y
-            offset_y 移动的倍数
+        :param offset_x: 正数为右移动，负数为左移动
+        :param multiplier_x: offset_x 移动的倍数
+        :param offset_y: 正数为上移动，负数为下移动
+        :param multiplier_y: offset_y 移动的倍数
+        :return: 元素中心坐标 (x, y)
         """
         btn_x = btn_y = ""
         sleep(self.pause)
@@ -408,22 +392,18 @@ class ButtonCenter:
             "left_center",
             "right_center",
         )
+
         if direction in default_point:
             btn_x, btn_y = getattr(self, f"btn_center_by_{direction}")(*position)
         elif direction in default_boundary_point:
             window_x, window_y = getattr(self, f"window_{direction}_position")()
-            # pylint: disable=eval-used
-            btn_x = eval(
-                f"{window_x} + {position[0]} {'+' if position[0] > 0 else '-'} {position[2] / 2}"
-            )
-            # pylint: disable=eval-used
-            btn_y = eval(
-                f"{window_y} + {position[1]} {'+' if position[1] > 0 else '-'} {position[3] / 2}"
-            )
+            btn_x = window_x + position[0] + (position[2] / 2 if position[0] > 0 else -position[2] / 2)
+            btn_y = window_y + position[1] + (position[3] / 2 if position[1] > 0 else -position[3] / 2)
         elif direction == "window_size":
-            btn_x, btn_y, button_w, button_y = self.window_location_and_sizes()
+            btn_x, btn_y, button_w, button_h = self.window_location_and_sizes()
             btn_x = btn_x + button_w / 2
-            btn_y = btn_y + button_y / 2
+            btn_y = btn_y + button_h / 2
+
         if btn_x and btn_y:
             if offset_x:
                 btn_x = btn_x + int(offset_x) * (int(multiplier_x) if multiplier_x else 1)
@@ -431,17 +411,18 @@ class ButtonCenter:
                 btn_y = btn_y + int(offset_y) * (int(multiplier_y) if multiplier_y else 1)
             logger.debug(f"[{btn_name}] 坐标：{str(btn_x)}, {str(btn_y)})")
             return btn_x, btn_y
-        raise NoSetReferencePoint(
+
+        raise ValueError(
             f"{direction}, 默认参考点 {default_point + default_boundary_point}"
         )
 
     def btn_size(
         self,
         btn_name: str,
-        offset_x: [int, float] = None,
-        multiplier_x: [int, float] = None,
-        offset_y: [int, float] = None,
-        multiplier_y: [int, float] = None,
+        offset_x: Optional[Union[int, float]] = None,
+        multiplier_x: Optional[Union[int, float]] = None,
+        offset_y: Optional[Union[int, float]] = None,
+        multiplier_y: Optional[Union[int, float]] = None,
     ) -> tuple:
         """
          获取元素的左上角坐标及长宽
