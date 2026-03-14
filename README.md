@@ -84,6 +84,70 @@ print(f"📐 窗口位置: ({window_x}, {window_y})")
 print(f"📏 窗口大小: {width} x {height}")
 ```
 
+### 使用简洁 API（最推荐）⭐
+
+如果你想要最简洁的调用方式，我们提供了 App 类和 Ele 类的完美配合：
+
+```python
+from relative_position import App
+
+# 创建应用实例
+app = App(appname="explorer.exe")
+
+# 使用 app.Ele() 创建元素（自动关联到应用）
+new_file_btn = app.Ele(
+    direction="left_top",
+    location=[20, 20, 50, 35]
+)
+
+# 操作元素（内置鼠标操作方法）
+new_file_btn.click()        # 点击
+new_file_btn.right_click()  # 右键点击
+new_file_btn.double_click() # 双击
+
+# 获取元素中心坐标
+x, y = new_file_btn.center()
+print(f"🎯 元素中心坐标: ({x}, {y})")
+```
+
+这种方式的优点：
+- 🎯 **最简洁**：不需要手动关联元素到应用
+- 🚀 **最快速**：一步创建并注册元素
+- 🎮 **最直观**：元素方法直接可用，就像操作真实的按钮
+
+```python
+from relative_position import Ele, Elements, get_button_center
+
+# 定义一个元素（就像定义你的好朋友）
+close_button = Ele(
+    direction="left_bottom",  # 参考点方向
+    location=[20, 20, 50, 35]  # x, y, width, height
+)
+
+# 或者一次定义多个元素（就像组建一个梦之队）
+elements = Elements()
+elements.add("close_button", close_button)
+elements.add("open_button", Ele(direction="right_top", location=[10, 10, 40, 30]))
+elements.add("menu_item", Ele(direction="left_top", location=[100, 200, 80, 40]))
+
+# 使用元素集合
+btn_center = get_button_center(
+    app_name="notepad.exe",  # Windows 用户
+    # app_name="gedit",      # Linux 用户
+    config_path=elements      # 直接传入 Elements 对象
+)
+
+# 获取元素坐标（比找宝藏还准）
+x, y = btn_center.btn_center("close_button")
+print(f"🎯 close_button 瞄准点: ({x}, {y})")
+
+# 获取窗口信息
+window_x, window_y = btn_center.window_left_top_position()
+width, height = btn_center.window_sizes()
+print(f"📐 窗口位置: ({window_x}, {window_y})")
+print(f"📏 窗口大小: {width} x {height}")
+```
+
 ### 支持的配置方式
 
 我们支持多种配置方式，总有一款适合你：
@@ -127,6 +191,18 @@ close_button = Ele(
 - `location`: 坐标列表 [x, y, width, height]
 - `x`, `y`, `width`, `height`: 便捷属性访问器
 
+#### 方法（关联到 App 后可用）
+- `center()`: 获取元素中心坐标
+- `click()`: 点击元素
+- `right_click()`: 右键点击元素
+- `double_click()`: 双击元素
+- `hover()`: 鼠标悬停在元素上
+
+#### 其他方法
+- `get_position()`: 获取位置信息 (direction, location)
+- `to_dict()`: 转换为字典
+- `set_app(app, name=None)`: 关联元素到 App 实例
+
 ### Elements 类
 
 元素集合管理器，让你像管理团队一样管理多个元素：
@@ -154,6 +230,58 @@ for name in elements:
 ### ButtonCenter 类
 
 元素定位的主力军，提供丰富的窗口和元素操作方法：
+
+#### 窗口定位方法
+- `window_left_top_position()`: 获取窗口左上角坐标
+- `window_right_top_position()`: 获取窗口右上角坐标
+- `window_left_bottom_position()`: 获取窗口左下角坐标
+- `window_right_bottom_position()`: 获取窗口右下角坐标
+- `window_center()`: 获取窗口中心坐标
+- `window_sizes()`: 获取窗口大小
+- `window_location_and_sizes()`: 获取窗口位置和大小
+
+#### 元素定位方法
+- `btn_center(btn_name, ...)`: 获取指定按钮的中心坐标
+- `btn_size(btn_name, ...)`: 获取指定按钮的大小和位置
+- `btn_info(btn_name)`: 获取元素的相对位置和参考系
+
+#### 窗口管理方法
+- `get_windows_number(name)`: 获取应用窗口数量
+- `get_windows_id(name)`: 获取窗口 ID 列表
+- `focus_windows(app_name)`: 聚焦指定窗口
+- `get_lastest_window_id(app_name)`: 获取最新窗口 ID
+
+### App 类（简洁 API）⭐
+
+提供最简洁的应用程序 UI 元素操作接口：
+
+```python
+from relative_position import App
+
+# 创建应用实例
+app = App(appname="explorer.exe")
+
+# 创建元素
+new_file_btn = app.Ele(
+    direction="left_top",
+    location=[20, 20, 50, 35]
+)
+```
+
+#### 构造函数
+- `appname`: 应用程序名称（Windows: "explorer.exe"，Linux: "gedit"）
+- `number`: 窗口索引，默认 -1（最后一个窗口）
+- `pause`: 每个操作步骤之前暂停的时间（秒）
+- `retry`: 重试次数
+
+#### 方法
+- `Ele(direction, location, name=None)`: 创建并注册元素
+- `get_center(element)`: 获取元素中心坐标（支持 Ele 对象或元素名称）
+- `focus_window()`: 将应用窗口置顶并聚焦
+- `window_info()`: 获取窗口信息
+- `window_size()`: 获取窗口大小
+- `window_center()`: 获取窗口中心坐标
+- `window_position()`: 获取窗口左上角坐标
 
 #### 窗口定位方法
 - `window_left_top_position()`: 获取窗口左上角坐标

@@ -6,7 +6,10 @@
 提供 Ele 类用于定义UI元素的相对位置
 """
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from relative_position.app import App
 
 
 class Ele:
@@ -35,7 +38,7 @@ class Ele:
         "window_size",
     )
 
-    def __init__(self, direction: str, location: List[int]):
+    def __init__(self, direction: str, location: List[int], app: Optional['App'] = None, name: Optional[str] = None):
         """
         初始化元素
 
@@ -43,6 +46,8 @@ class Ele:
             可选值: left_bottom, left_top, right_top, right_bottom,
                      top_center, bottom_center, left_center, right_center, window_size
         :param location: 相对位置坐标 [x, y, width, height]
+        :param app: 可选的 App 实例，用于关联元素到应用
+        :param name: 可选的元素名称，用于在 App 中注册
         """
         if direction not in self.VALID_DIRECTIONS:
             raise ValueError(
@@ -62,6 +67,15 @@ class Ele:
 
         self.direction = direction
         self.location = location
+        self._app = app
+        self._name = name
+
+        # 如果提供了 App 实例，自动注册元素
+        if self._app is not None:
+            if self._name is None:
+                self._name = self._app.register_element(self)
+            else:
+                self._app.add_element(self._name, self)
 
     def __repr__(self) -> str:
         """返回元素的字符串表示"""
@@ -109,6 +123,80 @@ class Ele:
     def height(self) -> int:
         """获取高度"""
         return int(self.location[3])
+
+    def set_app(self, app: 'App', name: Optional[str] = None):
+        """
+        关联元素到 App 实例
+
+        :param app: App 实例
+        :param name: 元素名称，可选
+        """
+        self._app = app
+        if name is not None:
+            self._name = name
+            self._app.add_element(self._name, self)
+        elif self._name is None:
+            self._name = self._app.register_element(self)
+        else:
+            self._app.add_element(self._name, self)
+
+    def center(self) -> Tuple[float, float]:
+        """
+        获取元素的中心坐标
+
+        :return: (x, y) 坐标
+        :raises RuntimeError: 如果元素未关联到 App 实例
+        """
+        if self._app is None:
+            raise RuntimeError("元素未关联到 App 实例，请先使用 set_app() 方法或在创建时提供 app 参数")
+
+        if self._name is None:
+            self._name = self._app.register_element(self)
+
+        return self._app.get_center(self)
+
+    def click(self, button: str = 'left'):
+        """
+        点击元素
+
+        :param button: 按钮类型，'left', 'right', 'middle'，默认 'left'
+        """
+        from relative_position.app import Mouse
+
+        x, y = self.center()
+        Mouse.move_to(int(x), int(y))
+
+        if button == 'left':
+            Mouse.click(button='left', clicks=1)
+        elif button == 'right':
+            Mouse.click(button='right', clicks=1)
+        elif button == 'middle':
+            Mouse.click(button='middle', clicks=1)
+        else:
+            raise ValueError(f"不支持的按钮类型: {button}")
+
+    def right_click(self):
+        """右键点击元素"""
+        self.click(button='right')
+
+    def double_click(self, button: str = 'left'):
+        """
+        双击元素
+
+        :param button: 按钮类型，默认 'left'
+        """
+        from relative_position.app import Mouse
+
+        x, y = self.center()
+        Mouse.move_to(int(x), int(y))
+        Mouse.double_click(button=button)
+
+    def hover(self):
+        """鼠标悬停在元素上"""
+        from relative_position.app import Mouse
+
+        x, y = self.center()
+        Mouse.move_to(int(x), int(y))
 
 
 class Elements:
