@@ -2,7 +2,7 @@
 # _*_ coding:utf-8 _*_
 
 """
-示例脚本：演示如何使用新的简洁 API
+示例脚本：演示如何使用简洁 API
 """
 
 import sys
@@ -12,7 +12,7 @@ import io
 if sys.platform.startswith('win'):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-from relative_position import App, Ele, Mouse
+from relative_position import App, Ele, Mouse, Direction
 
 
 def example_simple_usage():
@@ -25,7 +25,7 @@ def example_simple_usage():
     print("1. 使用 app.Ele() 创建元素（最简洁）：")
     # 定义元素（一步创建并关联到应用）
     new_file_btn = app.Ele(
-        direction="left_top",
+        direction=Direction.LEFT_TOP,  # 使用枚举
         location=[20, 20, 50, 35]
     )
 
@@ -67,7 +67,7 @@ def example_with_app_association():
     print("1. 创建元素时关联 App：")
     # 方式二：在创建时直接关联 App
     save_btn = Ele(
-        direction="right_bottom",
+        direction=Direction.RIGHT_BOTTOM,
         location=[100, 50, 60, 30],
         app=app,
         name="save_button"
@@ -78,7 +78,7 @@ def example_with_app_association():
     print("\n2. 多个元素操作：")
     # 定义多个元素
     close_btn = Ele(
-        direction="right_top",
+        direction=Direction.RIGHT_TOP,
         location=[30, 20, 50, 35],
         app=app
     )
@@ -133,20 +133,20 @@ def example_combined_usage():
 
     print("方式一：使用 app.Ele() 方法（推荐）⭐")
     example_code1 = '''
-from relative_position import App
+from relative_position import App, Direction
 
 # 创建应用实例
 app = App(appname="explorer.exe")
 
 # 使用 app.Ele() 创建元素（一步完成）
 new_folder_btn = app.Ele(
-    direction="left_top",
+    direction=Direction.LEFT_TOP,
     location=[20, 80, 50, 35]
 )
 
 # 定义其他元素
 file_menu = app.Ele(
-    direction="top_center",
+    direction=Direction.TOP_CENTER,
     location=[-150, 0, 60, 30]
 )
 
@@ -163,14 +163,14 @@ new_folder_btn.right_click()  # 右键点击
 
     print("\n方式二：使用 Ele() 构造函数并关联到 App")
     example_code2 = '''
-from relative_position import App, Ele
+from relative_position import App, Ele, Direction
 
 # 创建应用实例
 app = App(appname="explorer.exe")
 
 # 使用 Ele() 构造函数
 new_folder_btn = Ele(
-    direction="left_top",
+    direction=Direction.LEFT_TOP,
     location=[20, 80, 50, 35]
 )
 
@@ -179,7 +179,7 @@ new_folder_btn.set_app(app, name="new_folder")
 
 # 或者直接在创建时关联
 file_menu = Ele(
-    direction="top_center",
+    direction=Direction.TOP_CENTER,
     location=[-150, 0, 60, 30],
     app=app
 )
@@ -191,6 +191,22 @@ new_folder_btn.click()
 '''
 
     print(example_code2)
+
+    print("\n方式三：使用字符串（向后兼容）")
+    example_code3 = '''
+from relative_position import App
+
+# 创建应用实例
+app = App(appname="explorer.exe")
+
+# 使用字符串定义元素（仍然支持）
+new_folder_btn = app.Ele(
+    direction="left_top",  # 字符串方式
+    location=[20, 80, 50, 35]
+)
+'''
+
+    print(example_code3)
 
 
 def main():
@@ -207,6 +223,7 @@ def main():
     print("\n示例完成！")
     print("\n推荐使用方式：")
     print("- 使用 app.Ele() 方法创建元素（最简洁）⭐")
+    print("- 使用 Direction 枚举定义方向（类型安全）🎯")
     print("- 元素创建后直接可以调用 click(), right_click() 等方法")
     print("\n注意：")
     print("- 实际执行鼠标操作时，请确保目标应用正在运行")

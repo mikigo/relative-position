@@ -13,19 +13,20 @@ from typing import Optional, Union
 from relative_position.utils import logger, CmdCtl, ShortCut
 from relative_position.exceptions import ApplicationStartError, GetWindowInformation
 from relative_position.windows.windows_wininfo import WindowsWindowInfo
+from relative_position.elements import Direction
 
 
-class ButtonCenter:
+class RelativePosition:
     """
     根据应用程序中控件元素的相对坐标，通过配置元素的x、y、w和h来定位元素在屏幕中的位置，并返回用于鼠标和键盘操作的坐标。
     """
 
     def __init__(
-        self, app_name: str, config_path, number: int = -1, pause: int = 1, retry: int = 1
+        self, app_name: str, config, number: int = -1, pause: int = 1, retry: int = 1
     ):
         """
         :param app_name: 系统应用软件包，例如，notepad.exe
-        :param config_path: Ele 对象、Elements 对象或字典（INI 文件已不再支持）
+        :param config: Elements 对象或字典
         :param number: 默认为 -1, 即最后一个窗口
             如果你想指定不同的窗口，你可以在实例化对象的时候显式的传入 number，第一个为 0
         :param pause: 每个操作步骤之前暂停的时间
@@ -34,15 +35,14 @@ class ButtonCenter:
         self.app_name = app_name
         self.number = number
         self.pause = pause
-        self.config_path = config_path
         self.retry = retry
-        self._elements_dict = self._parse_config(config_path)
+        self._elements_dict = self._parse_config(config)
 
     def _parse_config(self, config):
         """
-        解析配置，仅支持 Ele 对象、Elements 对象或字典
+        解析配置，仅支持 Elements 对象或字典
 
-        :param config: Ele 对象、Elements 对象或字典
+        :param config: Elements 对象或字典
         :return: 元素字典
         """
         from relative_position.elements import Elements
@@ -53,7 +53,7 @@ class ButtonCenter:
             return config
         else:
             raise ValueError(f"不支持的配置类型: {type(config)}. "
-                           "请提供 Ele 对象、Elements 对象或字典（INI 文件已不再支持）")
+                           "请提供 Elements 对象或字典")
 
     def window_info(self):
         """
@@ -385,6 +385,10 @@ class ButtonCenter:
         direction = element_config['direction']
         position = element_config['location']
 
+        # 处理枚举类型
+        if isinstance(direction, Direction):
+            direction = direction.value
+
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
             "top_center",
@@ -448,6 +452,10 @@ class ButtonCenter:
         direction = element_config['direction']
         position = element_config['location']
 
+        # 处理枚举类型
+        if isinstance(direction, Direction):
+            direction = direction.value
+
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
             "top_center",
@@ -456,12 +464,12 @@ class ButtonCenter:
             "right_center",
         )
         if direction in default_point:
-            btn_x, btn_y, button_w, button_y = getattr(self, f"btn_pic_by_{direction}")(*position)
+            btn_x, btn_y, button_w, button_h = getattr(self, f"btn_pic_by_{direction}")(*position)
         elif direction in default_boundary_point:
             window_x, window_y = getattr(self, f"window_{direction}_position")()
             btn_x = window_x + position[0] - (0 if position[0] > 0 else position[2])
             btn_y = window_y + position[1] - (0 if position[1] > 0 else position[3])
-            button_w, button_y = position[2], position[3]
+            button_w, button_h = position[2], position[3]
         elif direction == "window_size":
             btn_x, btn_y, button_w, button_y = self.window_location_and_sizes()
         if btn_x != "" and btn_y != "":
@@ -470,10 +478,10 @@ class ButtonCenter:
             if offset_y:
                 btn_y = btn_y + int(offset_y) * (int(multiplier_y) if multiplier_y else 1)
             logger.debug(
-                f"[{btn_name}] 左上角坐标：{str(btn_x)}, {str(btn_y)}), 长宽 {button_w, button_y}"
+                f"[{btn_name}] 左上角坐标：{str(btn_x)}, {str(btn_y)}), 长宽 {button_w, button_h}"
             )
-            return btn_x, btn_y, button_w, button_y
-        raise NoSetReferencePoint(
+            return btn_x, btn_y, button_w, button_h
+        raise ValueError(
             f"{direction}, 默认参考点 {default_point + default_boundary_point}"
         )
 

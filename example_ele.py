@@ -12,16 +12,16 @@ import io
 if sys.platform.startswith('win'):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
-from relative_position import Ele, Elements, get_button_center
+from relative_position import Ele, Elements, Direction, App
 
 
 def example_single_element():
     """示例：创建单个元素"""
     print("=== 创建单个元素示例 ===")
 
-    # 使用 Ele 类定义元素
+    # 使用 Direction 枚举定义元素
     close_button = Ele(
-        direction="left_bottom",
+        direction=Direction.LEFT_BOTTOM,
         location=[20, 20, 50, 35]
     )
 
@@ -39,19 +39,19 @@ def example_elements_collection():
     # 创建元素集合
     elements = Elements()
 
-    # 添加多个元素
+    # 添加多个元素（使用枚举）
     elements.add("close_button", Ele(
-        direction="left_bottom",
+        direction=Direction.LEFT_BOTTOM,
         location=[20, 20, 50, 35]
     ))
 
     elements.add("open_button", Ele(
-        direction="right_top",
+        direction=Direction.RIGHT_TOP,
         location=[10, 10, 40, 30]
     ))
 
     elements.add("menu_item", Ele(
-        direction="left_top",
+        direction=Direction.LEFT_TOP,
         location=[100, 200, 80, 40]
     ))
 
@@ -66,14 +66,14 @@ def example_elements_collection():
         print(f"  位置: {ele.location}")
 
 
-def example_with_button_center():
-    """示例：使用 Ele 对象与 ButtonCenter 结合"""
-    print("\n=== 与 ButtonCenter 结合使用示例 ===")
+def example_with_app():
+    """示例：使用 Ele 对象与 App 结合"""
+    print("\n=== 与 App 结合使用示例 ===")
 
     # 创建元素集合
     elements = Elements({
-        "close_button": Ele(direction="left_bottom", location=[20, 20, 50, 35]),
-        "open_button": Ele(direction="right_top", location=[10, 10, 40, 30]),
+        "close_button": Ele(direction=Direction.LEFT_BOTTOM, location=[20, 20, 50, 35]),
+        "open_button": Ele(direction=Direction.RIGHT_TOP, location=[10, 10, 40, 30]),
     })
 
     # 注意：此功能需要应用正在运行
@@ -81,22 +81,26 @@ def example_with_button_center():
     print("示例代码：")
 
     example_code = """
-from relative_position import get_button_center, Ele, Elements
+from relative_position import Ele, Elements, Direction, App
+
+# 创建应用实例
+app = App(appname="notepad.exe")  # Windows
+# app = App(appname="gedit")       # Linux
 
 # 创建元素集合
 elements = Elements()
-elements.add("close_button", Ele(direction="left_bottom", location=[20, 20, 50, 35]))
+elements.add("close_button", Ele(direction=Direction.LEFT_BOTTOM, location=[20, 20, 50, 35]))
 
-# 使用元素集合创建 ButtonCenter
-btn_center = get_button_center(
-    app_name="notepad.exe",  # Windows
-    # app_name="gedit",       # Linux
-    config_path=elements       # 使用 Elements 对象而不是文件路径
-)
+# 将元素集合添加到应用
+app._button_center._elements_dict = elements.to_dict()
 
 # 获取按钮中心坐标
-x, y = btn_center.btn_center("close_button")
+x, y = app.get_center("close_button")
 print(f"close_button 中心坐标: ({x}, {y})")
+
+# 或者直接使用 app.Ele() 创建元素（推荐）
+btn = app.Ele(direction=Direction.LEFT_TOP, location=[100, 100, 50, 30], name="my_button")
+btn.click()
 """
 
     print(example_code)
@@ -107,8 +111,8 @@ def example_valid_directions():
     print("\n=== 有效方向示例 ===")
 
     print("支持的方向:")
-    for direction in Ele.VALID_DIRECTIONS:
-        print(f"  - {direction}")
+    for direction in Direction:
+        print(f"  - {direction.name}: {direction.value}")
 
 
 def example_error_handling():
@@ -116,7 +120,7 @@ def example_error_handling():
     print("\n=== 错误处理示例 ===")
 
     try:
-        # 无效的方向
+        # 无效的方向（字符串）
         invalid_ele = Ele(
             direction="invalid_direction",
             location=[10, 10, 40, 30]
@@ -127,7 +131,7 @@ def example_error_handling():
     try:
         # 无效的 location 格式
         invalid_ele = Ele(
-            direction="left_top",
+            direction=Direction.LEFT_TOP,
             location=[10, 10, 40]
         )
     except ValueError as e:
@@ -140,7 +144,7 @@ def main():
 
     example_single_element()
     example_elements_collection()
-    example_with_button_center()
+    example_with_app()
     example_valid_directions()
     example_error_handling()
 

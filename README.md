@@ -8,9 +8,10 @@
 
 - 🎯 **精准定位**：告别手动计算像素，让代码帮你找到元素
 - 🌍 **跨平台支持**：Linux (X11/Wayland) 和 Windows 全覆盖，一个库走天下
-- 🎮 **游戏化配置**：用代码定义 UI 元素，像玩游戏一样简单
+- 🎮 **代码定义**：用 Python 类定义 UI 元素，类型安全，IDE 友好
 - 🔧 **智能参考点**：支持 9 种参考点方向，满足各种布局需求
-- 🤖 **自动适配**：智能识别当前平台，加载最优实现
+- 🚀 **自动适配**：智能识别当前平台，加载最优实现
+- 🤖 **统一接口**：使用 pyautogui 进行跨平台鼠标操作
 
 ## 🚀 快速开始
 
@@ -20,7 +21,7 @@
 pip install relative-position
 ```
 
-> 或者从源码安装（适合喜欢折腾的开发者）：
+或者从源码安装：
 
 ```bash
 git clone https://github.com/mikigo/relative-position.git
@@ -30,77 +31,22 @@ pip install -e .
 
 ## 📚 使用指南
 
-### 窥探窗口信息
-
-想知道当前电脑上都有哪些窗口？一秒钟搞定：
-
-```python
-from relative_position import get_window_info_provider
-
-# 自动识别平台，获取对应的窗口信息提供者
-provider = get_window_info_provider()
-
-# 获取所有窗口信息（这比侦探调查还快）
-windows = provider.window_info()
-for name, info in windows.items():
-    print(f"发现目标: {name}")
-    print(f"📍 位置: {info['location']}")
-```
-
-### 使用 Ele 类定义元素（推荐）
-
-告别古老的 INI 文件，用代码定义元素，就像写诗一样优雅：
-
-```python
-from relative_position import Ele, Elements, get_button_center
-
-# 定义一个元素（就像定义你的好朋友）
-close_button = Ele(
-    direction="left_bottom",  # 参考点方向
-    location=[20, 20, 50, 35]  # x, y, width, height
-)
-
-# 或者一次定义多个元素（就像组建一个梦之队）
-elements = Elements()
-elements.add("close_button", close_button)
-elements.add("open_button", Ele(direction="right_top", location=[10, 10, 40, 30]))
-elements.add("menu_item", Ele(direction="left_top", location=[100, 200, 80, 40]))
-
-# 使用元素集合
-btn_center = get_button_center(
-    app_name="notepad.exe",  # Windows 用户
-    # app_name="gedit",      # Linux 用户
-    config_path=elements      # 直接传入 Elements 对象
-)
-
-# 获取元素坐标（比找宝藏还准）
-x, y = btn_center.btn_center("close_button")
-print(f"🎯 close_button 瞄准点: ({x}, {y})")
-
-# 获取窗口信息
-window_x, window_y = btn_center.window_left_top_position()
-width, height = btn_center.window_sizes()
-print(f"📐 窗口位置: ({window_x}, {window_y})")
-print(f"📏 窗口大小: {width} x {height}")
-```
-
-### 使用简洁 API（最推荐）⭐
-
-如果你想要最简洁的调用方式，我们提供了 App 类和 Ele 类的完美配合：
+### 最简洁的使用方式（推荐）⭐
 
 ```python
 from relative_position import App
 
 # 创建应用实例
-app = App(appname="explorer.exe")
+app = App(appname="explorer.exe")  # Windows
+# app = App(appname="gedit")       # Linux
 
 # 使用 app.Ele() 创建元素（自动关联到应用）
 new_file_btn = app.Ele(
-    direction="left_top",
-    location=[20, 20, 50, 35]
+    direction="left_top",      # 或使用 Direction.LEFT_TOP 枚举
+    location=[20, 20, 50, 35]  # [x, y, width, height]
 )
 
-# 操作元素（内置鼠标操作方法）
+# 操作元素
 new_file_btn.click()        # 点击
 new_file_btn.right_click()  # 右键点击
 new_file_btn.double_click() # 双击
@@ -108,87 +54,81 @@ new_file_btn.double_click() # 双击
 # 获取元素中心坐标
 x, y = new_file_btn.center()
 print(f"🎯 元素中心坐标: ({x}, {y})")
+
+# 窗口操作
+app.focus_window()         # 聚焦窗口
+wx, wy = app.window_position()
+width, height = app.window_size()
+print(f"📐 窗口位置: ({wx}, {wy}), 大小: {width} x {height}")
 ```
 
-这种方式的优点：
-- 🎯 **最简洁**：不需要手动关联元素到应用
-- 🚀 **最快速**：一步创建并注册元素
-- 🎮 **最直观**：元素方法直接可用，就像操作真实的按钮
+### 使用 Direction 枚举（类型安全）
 
 ```python
-from relative_position import Ele, Elements, get_button_center
+from relative_position import App, Direction
 
-# 定义一个元素（就像定义你的好朋友）
-close_button = Ele(
-    direction="left_bottom",  # 参考点方向
-    location=[20, 20, 50, 35]  # x, y, width, height
+app = App(appname="explorer.exe")
+
+# 使用枚举定义元素（推荐）
+close_btn = app.Ele(
+    direction=Direction.LEFT_BOTTOM,
+    location=[20, 20, 50, 35]
 )
 
-# 或者一次定义多个元素（就像组建一个梦之队）
-elements = Elements()
-elements.add("close_button", close_button)
-elements.add("open_button", Ele(direction="right_top", location=[10, 10, 40, 30]))
-elements.add("menu_item", Ele(direction="left_top", location=[100, 200, 80, 40]))
-
-# 使用元素集合
-btn_center = get_button_center(
-    app_name="notepad.exe",  # Windows 用户
-    # app_name="gedit",      # Linux 用户
-    config_path=elements      # 直接传入 Elements 对象
-)
-
-# 获取元素坐标（比找宝藏还准）
-x, y = btn_center.btn_center("close_button")
-print(f"🎯 close_button 瞄准点: ({x}, {y})")
-
-# 获取窗口信息
-window_x, window_y = btn_center.window_left_top_position()
-width, height = btn_center.window_sizes()
-print(f"📐 窗口位置: ({window_x}, {window_y})")
-print(f"📏 窗口大小: {width} x {height}")
+# 枚举提供完整的类型检查和 IDE 自动补全
+close_btn.click()
 ```
 
-### 支持的配置方式
+### 使用 Elements 管理多个元素
 
-我们支持多种配置方式，总有一款适合你：
+```python
+from relative_position import Ele, Elements, Direction
 
-- ✅ **Ele 对象**：单个元素定义（最灵活）
-- ✅ **Elements 对象**：元素集合管理（推荐）
-- ✅ **字典配置**：数据驱动（适合配置管理系统）
-- ❌ **INI 文件**：已不再支持（拥抱代码定义吧！）
+# 创建元素集合
+elements = Elements()
+elements.add("close_button", Ele(direction=Direction.LEFT_BOTTOM, location=[20, 20, 50, 35]))
+elements.add("open_button", Ele(direction=Direction.RIGHT_TOP, location=[10, 10, 40, 30]))
 
-## 🎨 参考点方向 (direction)
+# 像字典一样访问
+close_btn = elements["close_button"]
+print(f"方向: {close_btn.direction}, 位置: {close_btn.location}")
+```
 
-就像选择最佳的观察角度一样，我们提供了 9 种参考点方向：
+## 🎨 参考点方向 (Direction)
 
-| 方向 | 说明 | 适用场景 |
-|------|------|----------|
-| `left_top` | 左上角 | 传统的左上定位 |
-| `right_top` | 右上角 | 适合右上角按钮 |
-| `left_bottom` | 左下角 | 底部左侧元素 |
-| `right_bottom` | 右下角 | 底部右侧元素 |
-| `top_center` | 上边界中心 | 顶部中间按钮 |
-| `bottom_center` | 下边界中心 | 底部中间按钮 |
-| `left_center` | 左边界中心 | 左侧中间元素 |
-| `right_center` | 右边界中心 | 右侧中间元素 |
-| `window_size` | 整个窗口 | 窗口级别操作 |
+`Direction` 枚举提供了 9 种参考点方向：
+
+| 枚举值 | 字符串值 | 说明 | 适用场景 |
+|--------|----------|------|----------|
+| `Direction.LEFT_TOP` | `"left_top"` | 左上角 | 传统的左上定位 |
+| `Direction.RIGHT_TOP` | `"right_top"` | 右上角 | 适合右上角按钮 |
+| `Direction.LEFT_BOTTOM` | `"left_bottom"` | 左下角 | 底部左侧元素 |
+| `Direction.RIGHT_BOTTOM` | `"right_bottom"` | 右下角 | 底部右侧元素 |
+| `Direction.TOP_CENTER` | `"top_center"` | 上边界中心 | 顶部中间按钮 |
+| `Direction.BOTTOM_CENTER` | `"bottom_center"` | 下边界中心 | 底部中间按钮 |
+| `Direction.LEFT_CENTER` | `"left_center"` | 左边界中心 | 左侧中间元素 |
+| `Direction.RIGHT_CENTER` | `"right_center"` | 右边界中心 | 右侧中间元素 |
+| `Direction.WINDOW_SIZE` | `"window_size"` | 整个窗口 | 窗口级别操作 |
 
 ## 🏗️ API 参考
 
 ### Ele 类
 
-元素定义的核心类，让你的 UI 元素定义变得有型：
+元素定义的核心类，支持枚举和字符串两种方式：
 
 ```python
-close_button = Ele(
-    direction="left_bottom",
-    location=[20, 20, 50, 35]
-)
+from relative_position import Ele, Direction
+
+# 使用枚举（推荐）
+btn = Ele(direction=Direction.LEFT_TOP, location=[20, 20, 50, 35])
+
+# 使用字符串（向后兼容）
+btn = Ele(direction="left_top", location=[20, 20, 50, 35])
 ```
 
 #### 属性
-- `direction`: 参考点方向
-- `location`: 坐标列表 [x, y, width, height]
+- `direction`: 参考点方向（Direction 枚举）
+- `location`: 坐标列表 `[x, y, width, height]`
 - `x`, `y`, `width`, `height`: 便捷属性访问器
 
 #### 方法（关联到 App 后可用）
@@ -199,20 +139,20 @@ close_button = Ele(
 - `hover()`: 鼠标悬停在元素上
 
 #### 其他方法
-- `get_position()`: 获取位置信息 (direction, location)
+- `get_position()`: 获取位置信息 `(direction, location)`
 - `to_dict()`: 转换为字典
 - `set_app(app, name=None)`: 关联元素到 App 实例
 
 ### Elements 类
 
-元素集合管理器，让你像管理团队一样管理多个元素：
+元素集合管理器：
 
 ```python
 elements = Elements()
 elements.add("close_button", Ele(...))
 elements.add("open_button", Ele(...))
 
-# 像字典一样访问
+# 访问元素
 element = elements["close_button"]
 
 # 遍历所有元素
@@ -227,30 +167,6 @@ for name in elements:
 - `list_names()`: 获取所有元素名称
 - `to_dict()`: 转换为字典
 
-### ButtonCenter 类
-
-元素定位的主力军，提供丰富的窗口和元素操作方法：
-
-#### 窗口定位方法
-- `window_left_top_position()`: 获取窗口左上角坐标
-- `window_right_top_position()`: 获取窗口右上角坐标
-- `window_left_bottom_position()`: 获取窗口左下角坐标
-- `window_right_bottom_position()`: 获取窗口右下角坐标
-- `window_center()`: 获取窗口中心坐标
-- `window_sizes()`: 获取窗口大小
-- `window_location_and_sizes()`: 获取窗口位置和大小
-
-#### 元素定位方法
-- `btn_center(btn_name, ...)`: 获取指定按钮的中心坐标
-- `btn_size(btn_name, ...)`: 获取指定按钮的大小和位置
-- `btn_info(btn_name)`: 获取元素的相对位置和参考系
-
-#### 窗口管理方法
-- `get_windows_number(name)`: 获取应用窗口数量
-- `get_windows_id(name)`: 获取窗口 ID 列表
-- `focus_windows(app_name)`: 聚焦指定窗口
-- `get_lastest_window_id(app_name)`: 获取最新窗口 ID
-
 ### App 类（简洁 API）⭐
 
 提供最简洁的应用程序 UI 元素操作接口：
@@ -258,19 +174,15 @@ for name in elements:
 ```python
 from relative_position import App
 
-# 创建应用实例
 app = App(appname="explorer.exe")
-
-# 创建元素
-new_file_btn = app.Ele(
-    direction="left_top",
-    location=[20, 20, 50, 35]
-)
+btn = app.Ele(direction=Direction.LEFT_TOP, location=[20, 20, 50, 35])
 ```
 
-#### 构造函数
-- `appname`: 应用程序名称（Windows: "explorer.exe"，Linux: "gedit"）
-- `number`: 窗口索引，默认 -1（最后一个窗口）
+#### 构造函数参数
+- `appname`: 应用程序名称
+  - Windows: `"explorer.exe"`, `"notepad.exe"` 等
+  - Linux: `"gedit"`, `"firefox"` 等
+- `number`: 窗口索引，默认 `-1`（最后一个窗口）
 - `pause`: 每个操作步骤之前暂停的时间（秒）
 - `retry`: 重试次数
 
@@ -283,6 +195,10 @@ new_file_btn = app.Ele(
 - `window_center()`: 获取窗口中心坐标
 - `window_position()`: 获取窗口左上角坐标
 
+### RelativePosition 类
+
+底层实现类，提供完整的窗口和元素操作方法（通常通过 App 类间接使用）。
+
 #### 窗口定位方法
 - `window_left_top_position()`: 获取窗口左上角坐标
 - `window_right_top_position()`: 获取窗口右上角坐标
@@ -303,11 +219,22 @@ new_file_btn = app.Ele(
 - `focus_windows(app_name)`: 聚焦指定窗口
 - `get_lastest_window_id(app_name)`: 获取最新窗口 ID
 
+### Mouse 类
+
+跨平台鼠标操作工具类：
+
+```python
+from relative_position import Mouse
+
+Mouse.move_to(500, 500)        # 移动鼠标
+Mouse.click(button='left')       # 左键点击
+Mouse.click(button='right')      # 右键点击
+Mouse.double_click(button='left') # 双击
+```
+
 ## 🖥️ 平台实现细节
 
 ### Linux 平台
-
-我们的 Linux 实现就像一个多面手，能够适应不同的环境：
 
 #### X11 实现
 - **工具链**: `xdotool` + `xwininfo`
@@ -320,40 +247,35 @@ new_file_btn = app.Ele(
 - **适用场景**: Deepin 等使用 Wayland 的发行版
 
 ### Windows 平台
-
-Windows 实现就像一个熟练的 Windows 专家：
-
 - **工具链**: Windows API (user32.dll)
 - **特点**: 原生性能，集成度高
-- **依赖**: `psutil` 库（用于进程管理）
-- **额外功能**: 支持快捷键操作（ESC 等）
+- **鼠标操作**: pyautogui（跨平台统一接口）
 
 ## 🏛️ 架构设计
 
-我们的架构就像一个精心设计的迷宫，简单却充满智慧：
-
 ```
 relative_position/
-├── elements.py              # Ele 和 Elements 类（元素定义核心）
-├── config.py               # 平台检测和配置（自动识别）
-├── exceptions.py            # 自定义异常（友好的错误提示）
-├── utils.py                # 工具函数（日志、命令、快捷键）
-├── __init__.py             # 模块入口（统一的 API）
-├── linux/                  # Linux 平台实现
-│   ├── base.py            # 抽象基类（接口定义）
-│   ├── main.py            # ButtonCenter 实现
-│   ├── x11_wininfo.py    # X11 窗口信息提供者
+├── __init__.py             # 模块入口（导出 Ele, Direction, App, Mouse）
+├── elements.py             # Ele, Elements, Direction 类
+├── app.py                 # App, Mouse 类（用户 API）
+├── config.py              # 平台检测和配置
+├── exceptions.py           # 自定义异常
+├── utils.py              # 工具函数（日志、命令、快捷键）
+├── linux/                # Linux 平台实现
+│   ├── base.py          # RelativePositionBase 抽象基类
+│   ├── main.py          # RelativePosition 实现
+│   ├── x11_wininfo.py  # X11 窗口信息提供者
 │   └── wayland_wininfo.py # Wayland 窗口信息提供者
-└── windows/                # Windows 平台实现
-    ├── main.py            # ButtonCenter 实现
+└── windows/              # Windows 平台实现
+    ├── main.py          # RelativePosition 实现
     └── windows_wininfo.py # Windows 窗口信息提供者
 ```
 
-### 设计优势 🎯
-
+### 设计优势
 - **解耦**: X11 和 Wayland 实现完全独立，互不干扰
 - **可扩展**: 想要支持新的显示服务器？实现一个类就行
-- **易维护**: 统一的接口定义，代码结构像艺术品一样清晰
+- **易维护**: 统一的接口定义，代码结构清晰
+- **类型安全**: 使用枚举提供编译时类型检查
 - **平台优化**: 每个平台都可以独立优化，不相互影响
 
 ## 📦 依赖管理
@@ -361,30 +283,28 @@ relative_position/
 ### 所有平台
 - Python 3.6+
 
-### Windows 平台
-```bash
-pip install psutil>=5.9.0
-```
+### 核心依赖（自动安装）
+- `pyautogui>=0.9.54` - 跨平台鼠标操作
+- `psutil>=5.9.0` - Windows 进程管理
+- `dbus-python>=1.3.2` - Linux D-Bus 支持
 
-### Linux 平台
-```bash
-# 基础依赖
-pip install dbus-python>=1.3.2
+### Linux 平台额外依赖
 
-# X11 依赖（如果使用 X11）
+#### X11 环境
+```bash
 sudo apt-get install xdotool x11-utils  # Debian/Ubuntu
 sudo yum install xdotool xorg-xwininfo  # RHEL/CentOS
-
-# Wayland 依赖（如果使用 Wayland）
-# 需要安装 dtkwmjack 库（Deepin 特定）
 ```
+
+#### Wayland 环境
+需要安装 dtkwmjack 库（Deepin 特定）
 
 ## 🎓 示例代码
 
 更多示例请查看项目中的示例文件：
 
+- `example_simple_api.py`: 简洁 API 使用示例（推荐）⭐
 - `example_ele.py`: Ele 类使用示例
-- `example.py`: 基础使用示例
 
 ## 🤝 贡献指南
 

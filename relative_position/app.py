@@ -44,8 +44,7 @@ class App:
         appname: str,
         number: int = -1,
         pause: int = 1,
-        retry: int = 1,
-        config_path: Optional[str] = None
+        retry: int = 1
     ):
         """
         初始化应用实例
@@ -56,29 +55,27 @@ class App:
         :param number: 窗口索引，默认 -1（最后一个窗口）
         :param pause: 每个操作步骤之前暂停的时间（秒）
         :param retry: 重试次数
-        :param config_path: 可选的配置文件路径（已废弃，使用 Elements 对象或字典）
         """
         self.appname = appname
         self.number = number
         self.pause = pause
         self.retry = retry
-        self.config_path = config_path
 
-        # 根据平台加载对应的 ButtonCenter
+        # 根据平台加载对应的 RelativePosition
         if IS_WINDOWS:
-            from relative_position.windows.main import ButtonCenter as WindowsButtonCenter
-            self._button_center = WindowsButtonCenter(
+            from relative_position.windows.main import RelativePosition as WindowsRelativePosition
+            self._button_center = WindowsRelativePosition(
                 app_name=appname,
-                config_path={},  # 初始化为空字典
+                config={},
                 number=number,
                 pause=pause,
                 retry=retry
             )
         else:
-            from relative_position.linux.main import ButtonCenter as LinuxButtonCenter
-            self._button_center = LinuxButtonCenter(
+            from relative_position.linux.main import RelativePosition as LinuxRelativePosition
+            self._button_center = LinuxRelativePosition(
                 app_name=appname,
-                config_path={},  # 初始化为空字典
+                config={},
                 number=number,
                 pause=pause,
                 retry=retry
@@ -179,7 +176,7 @@ class App:
 
 # 鼠标操作工具函数
 class Mouse:
-    """鼠标操作类"""
+    """鼠标操作类 - 使用 pyautogui 实现"""
 
     @staticmethod
     def move_to(x: int, y: int):
@@ -189,13 +186,14 @@ class Mouse:
         :param x: x 坐标
         :param y: y 坐标
         """
-        if sys.platform.startswith('win'):
-            import ctypes
-            ctypes.windll.user32.SetCursorPos(int(x), int(y))
-        elif sys.platform.startswith('linux'):
-            import subprocess
-            subprocess.run(['xdotool', 'mousemove', str(int(x)), str(int(y))], check=False)
-        logger.debug(f"鼠标移动到: ({x}, {y})")
+        try:
+            import pyautogui
+            pyautogui.moveTo(int(x), int(y))
+            logger.debug(f"鼠标移动到: ({x}, {y})")
+        except ImportError:
+            raise ImportError(
+                "pyautogui 未安装，请运行: pip install pyautogui"
+            )
 
     @staticmethod
     def click(button: str = 'left', clicks: int = 1):
@@ -205,46 +203,14 @@ class Mouse:
         :param button: 按钮类型，'left', 'right', 'middle'
         :param clicks: 点击次数
         """
-        if sys.platform.startswith('win'):
-            import ctypes
-            import time
-
-            button_codes = {
-                'left': (0x0002, 0x0004),      # MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP
-                'right': (0x0008, 0x0010),    # MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP
-                'middle': (0x0020, 0x0040)    # MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP
-            }
-
-            if button not in button_codes:
-                raise ValueError(f"不支持的按钮类型: {button}")
-
-            down_code, up_code = button_codes[button]
-
-            for _ in range(clicks):
-                ctypes.windll.user32.mouse_event(down_code, 0, 0, 0, 0)
-                time.sleep(0.05)
-                ctypes.windll.user32.mouse_event(up_code, 0, 0, 0, 0)
-                if _ < clicks - 1:  # 不是最后一次点击
-                    time.sleep(0.1)
-
-        elif sys.platform.startswith('linux'):
-            import subprocess
-            button_map = {
-                'left': '1',
-                'right': '3',
-                'middle': '2'
-            }
-
-            if button not in button_map:
-                raise ValueError(f"不支持的按钮类型: {button}")
-
-            for _ in range(clicks):
-                subprocess.run(['xdotool', 'click', button_map[button]], check=False)
-                if _ < clicks - 1:
-                    import time
-                    time.sleep(0.1)
-
-        logger.debug(f"鼠标{button}点击 {clicks} 次")
+        try:
+            import pyautogui
+            pyautogui.click(button=button, clicks=clicks)
+            logger.debug(f"鼠标{button}点击 {clicks} 次")
+        except ImportError:
+            raise ImportError(
+                "pyautogui 未安装，请运行: pip install pyautogui"
+            )
 
     @staticmethod
     def double_click(button: str = 'left'):
@@ -253,5 +219,11 @@ class Mouse:
 
         :param button: 按钮类型，默认 'left'
         """
-        Mouse.click(button=button, clicks=2)
-        logger.debug(f"鼠标{button}双击")
+        try:
+            import pyautogui
+            pyautogui.doubleClick(button=button)
+            logger.debug(f"鼠标{button}双击")
+        except ImportError:
+            raise ImportError(
+                "pyautogui 未安装，请运行: pip install pyautogui"
+            )

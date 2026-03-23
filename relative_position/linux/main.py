@@ -14,12 +14,13 @@ except ImportError:
 from relative_position.config import config
 from relative_position.utils import logger, CmdCtl, ShortCut
 from relative_position.exceptions import ApplicationStartError, GetWindowInformation
-from relative_position.linux.base import ButtonCenterBase
+from relative_position.linux.base import RelativePositionBase
 from relative_position.linux.wayland_wininfo import WaylandWindowInfo
 from relative_position.linux.x11_wininfo import X11WindowInfo
+from relative_position.elements import Direction
 
 
-class ButtonCenter(ButtonCenterBase):
+class RelativePosition(RelativePositionBase):
     """
     根据应用程序中控件元素的相对坐标，通过配置元素的x、y、w和h来定位元素在屏幕中的位置，并返回用于鼠标和键盘操作的坐标。
 
@@ -27,15 +28,15 @@ class ButtonCenter(ButtonCenterBase):
     """
 
     def __init__(
-        self, app_name: str, config_path: str, number: int = -1, pause: int = 1, retry: int = 1
+        self, app_name: str, config, number: int = -1, pause: int = 1, retry: int = 1
     ):
         """
         :param app_name: 系统应用软件包，例如，dde-file-manager
-        :param config_path: ui 定位配置文件路径（绝对路径）
+        :param config: Elements 对象或字典
         :param number: 默认为 -1, 即最后一个窗口
             如果你想指定不同的窗口，你可以在实例化对象的时候显式的传入 number，第一个为 0
         """
-        super().__init__(app_name, config_path, number, pause, retry)
+        super().__init__(app_name, config, number, pause, retry)
         self._init_window_provider()
 
     def _init_window_provider(self):
@@ -439,6 +440,10 @@ class ButtonCenter(ButtonCenterBase):
         direction = element_config['direction']
         position = element_config['location']
 
+        # 处理枚举类型
+        if isinstance(direction, Direction):
+            direction = direction.value
+
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
             "top_center",
@@ -496,6 +501,10 @@ class ButtonCenter(ButtonCenterBase):
         element_config = self._elements_dict[btn_name]
         direction = element_config['direction']
         position = element_config['location']
+
+        # 处理枚举类型
+        if isinstance(direction, Direction):
+            direction = direction.value
 
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (

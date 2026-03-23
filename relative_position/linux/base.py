@@ -31,16 +31,16 @@ class WindowInfoProvider(ABC):
         pass
 
 
-class ButtonCenterBase(ABC):
+class RelativePositionBase(ABC):
     """
-    按钮中心抽象基类
+    相对定位抽象基类
     根据应用程序中控件元素的相对坐标，通过配置元素的x、y、w和h来定位元素在屏幕中的位置
     """
 
-    def __init__(self, app_name: str, config_path, number: int = -1, pause: int = 1, retry: int = 1):
+    def __init__(self, app_name: str, config, number: int = -1, pause: int = 1, retry: int = 1):
         """
         :param app_name: 系统应用软件包
-        :param config_path: Ele 对象、Elements 对象或字典（INI 文件已不再支持）
+        :param config: Elements 对象或字典
         :param number: 默认为 -1, 即最后一个窗口
             如果你想指定不同的窗口，你可以在实例化对象的时候显式的传入 number，第一个为 0
         :param pause: 每个操作步骤之前暂停的时间
@@ -49,15 +49,14 @@ class ButtonCenterBase(ABC):
         self.app_name = app_name
         self.number = number
         self.pause = pause
-        self.config_path = config_path
         self.retry = retry
-        self._elements_dict = self._parse_config(config_path)
+        self._elements_dict = self._parse_config(config)
 
     def _parse_config(self, config):
         """
-        解析配置，仅支持 Ele 对象、Elements 对象或字典
+        解析配置，仅支持 Elements 对象或字典
 
-        :param config: Ele 对象、Elements 对象或字典
+        :param config: Elements 对象或字典
         :return: 元素字典
         """
         from relative_position.elements import Elements
@@ -68,7 +67,7 @@ class ButtonCenterBase(ABC):
             return config
         else:
             raise ValueError(f"不支持的配置类型: {type(config)}. "
-                           "请提供 Ele 对象、Elements 对象或字典（INI 文件已不再支持）")
+                           "请提供 Elements 对象或字典")
     @abstractmethod
     def window_info(self):
         """

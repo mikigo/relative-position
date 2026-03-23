@@ -6,10 +6,41 @@
 提供 Ele 类用于定义UI元素的相对位置
 """
 
-from typing import List, Tuple, Optional, TYPE_CHECKING
+from typing import List, Tuple, Optional, Union, TYPE_CHECKING
+from enum import Enum
 
 if TYPE_CHECKING:
     from relative_position.app import App
+
+
+class Direction(Enum):
+    """
+    方向枚举，定义元素相对于窗口的参考点方向
+
+    角点参考:
+    - LEFT_TOP: 左上角
+    - RIGHT_TOP: 右上角
+    - LEFT_BOTTOM: 左下角
+    - RIGHT_BOTTOM: 右下角
+
+    边界中心参考:
+    - TOP_CENTER: 上边界中心
+    - BOTTOM_CENTER: 下边界中心
+    - LEFT_CENTER: 左边界中心
+    - RIGHT_CENTER: 右边界中心
+
+    完整窗口:
+    - WINDOW_SIZE: 整个窗口
+    """
+    LEFT_TOP = "left_top"
+    RIGHT_TOP = "right_top"
+    LEFT_BOTTOM = "left_bottom"
+    RIGHT_BOTTOM = "right_bottom"
+    TOP_CENTER = "top_center"
+    BOTTOM_CENTER = "bottom_center"
+    LEFT_CENTER = "left_center"
+    RIGHT_CENTER = "right_center"
+    WINDOW_SIZE = "window_size"
 
 
 class Ele:
@@ -18,6 +49,14 @@ class Ele:
 
     使用示例：
     ```python
+    from relative_position import Ele, Direction
+
+    close_button = Ele(
+        direction=Direction.LEFT_BOTTOM,
+        location=[20, 20, 50, 35]
+    )
+
+    # 或者使用字符串（向后兼容）
     close_button = Ele(
         direction="left_bottom",
         location=[20, 20, 50, 35]
@@ -25,34 +64,33 @@ class Ele:
     ```
     """
 
-    # 定义有效的方向
-    VALID_DIRECTIONS = (
-        "left_bottom",
-        "left_top",
-        "right_top",
-        "right_bottom",
-        "top_center",
-        "bottom_center",
-        "left_center",
-        "right_center",
-        "window_size",
-    )
-
-    def __init__(self, direction: str, location: List[int], app: Optional['App'] = None, name: Optional[str] = None):
+    def __init__(self, direction: Union[Direction, str], location: List[int], app: Optional['App'] = None, name: Optional[str] = None):
         """
         初始化元素
 
-        :param direction: 参考点方向
-            可选值: left_bottom, left_top, right_top, right_bottom,
-                     top_center, bottom_center, left_center, right_center, window_size
+        :param direction: 参考点方向，可以使用 Direction 枚举或字符串
+            枚举值: Direction.LEFT_BOTTOM, Direction.LEFT_TOP, Direction.RIGHT_TOP, Direction.RIGHT_BOTTOM,
+                     Direction.TOP_CENTER, Direction.BOTTOM_CENTER, Direction.LEFT_CENTER, Direction.RIGHT_CENTER,
+                     Direction.WINDOW_SIZE
+            字符串值: "left_bottom", "left_top", "right_top", "right_bottom",
+                      "top_center", "bottom_center", "left_center", "right_center", "window_size"
         :param location: 相对位置坐标 [x, y, width, height]
         :param app: 可选的 App 实例，用于关联元素到应用
         :param name: 可选的元素名称，用于在 App 中注册
         """
-        if direction not in self.VALID_DIRECTIONS:
-            raise ValueError(
-                f"无效的方向: {direction}. "
-                f"有效值为: {', '.join(self.VALID_DIRECTIONS)}"
+        # 处理 direction 参数，支持枚举和字符串
+        if isinstance(direction, str):
+            # 字符串转枚举
+            try:
+                direction = Direction(direction)
+            except ValueError:
+                raise ValueError(
+                    f"无效的方向: {direction}. "
+                    f"有效值为: {', '.join([d.value for d in Direction])}"
+                )
+        elif not isinstance(direction, Direction):
+            raise TypeError(
+                f"direction 必须是 Direction 枚举或字符串类型，得到的是: {type(direction)}"
             )
 
         if not isinstance(location, (list, tuple)) or len(location) != 4:
@@ -100,7 +138,7 @@ class Ele:
         :return: 包含 direction 和 location 的字典
         """
         return {
-            "direction": self.direction,
+            "direction": self.direction.value if isinstance(self.direction, Direction) else self.direction,
             "location": self.location
         }
 

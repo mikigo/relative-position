@@ -9,12 +9,13 @@
 - Windows
 """
 
-from relative_position.elements import Ele
+from relative_position.elements import Ele, Direction
 from relative_position.app import App, Mouse
 
 
 __all__ = [
     'Ele',
+    'Direction',
     'App',
     'Mouse',
 ]
