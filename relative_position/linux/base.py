@@ -315,7 +315,32 @@ class RelativePositionBase(ABC):
 
         element_config = self._elements_dict[btn_name]
         direction = element_config['direction']
-        position = element_config['location']
+
+        # 处理 center 参数
+        if 'center' in element_config:
+            center_offset = element_config['center']
+            # 根据 direction 获取参考点坐标
+            if direction in ("left_bottom", "left_top", "right_top", "right_bottom"):
+                ref_x, ref_y = getattr(self, f"window_{direction}_position")()
+            elif direction in ("top_center", "bottom_center", "left_center", "right_center"):
+                ref_x, ref_y = getattr(self, f"window_{direction}_position")()
+            elif direction == "window_size":
+                ref_x, ref_y = self.window_center()
+            else:
+                raise ValueError(f"无效的方向: {direction}")
+
+            btn_x = ref_x + center_offset[0]
+            btn_y = ref_y + center_offset[1]
+
+            # 应用偏移
+            if offset_x:
+                btn_x = btn_x + int(offset_x) * (int(multiplier_x) if multiplier_x else 1)
+            if offset_y:
+                btn_y = btn_y + int(offset_y) * (int(multiplier_y) if multiplier_y else 1)
+            return btn_x, btn_y
+
+        # 处理 bbox 参数
+        position = element_config['bbox']
 
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
@@ -374,7 +399,7 @@ class RelativePositionBase(ABC):
 
         element_config = self._elements_dict[btn_name]
         direction = element_config['direction']
-        position = element_config['location']
+        position = element_config['bbox']
 
         default_point = ("left_bottom", "left_top", "right_top", "right_bottom")
         default_boundary_point = (
@@ -416,7 +441,7 @@ class RelativePositionBase(ABC):
 
         element_config = self._elements_dict[btn_name]
         direction = element_config['direction']
-        position = element_config['location']
+        position = element_config['bbox']
         return position, direction
 
     @abstractmethod

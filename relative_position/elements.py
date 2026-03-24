@@ -51,20 +51,34 @@ class Ele:
     ```python
     from relative_position import Ele, Direction
 
+    # 使用 bbox 参数
     close_button = Ele(
         direction=Direction.LEFT_BOTTOM,
-        location=[20, 20, 50, 35]
+        bbox=[20, 20, 50, 35]
+    )
+
+    # 或者使用 center 参数
+    close_button = Ele(
+        direction=Direction.LEFT_BOTTOM,
+        center=[30, 30]  # 相对 direction 的偏移坐标
     )
 
     # 或者使用字符串（向后兼容）
     close_button = Ele(
         direction="left_bottom",
-        location=[20, 20, 50, 35]
+        bbox=[20, 20, 50, 35]
     )
     ```
     """
 
-    def __init__(self, direction: Union[Direction, str], location: List[int], app: Optional['App'] = None, name: Optional[str] = None):
+    def __init__(
+        self,
+        direction: Union[Direction, str],
+        bbox: Optional[List[int]] = None,
+        center: Optional[List[int]] = None,
+        app: Optional['App'] = None,
+        name: Optional[str] = None
+    ):
         """
         初始化元素
 
@@ -74,10 +88,17 @@ class Ele:
                      Direction.WINDOW_SIZE
             字符串值: "left_bottom", "left_top", "right_top", "right_bottom",
                       "top_center", "bottom_center", "left_center", "right_center", "window_size"
-        :param location: 相对位置坐标 [x, y, width, height]
+        :param bbox: 边界框坐标 [x, y, width, height]，与 center 参数二选一
+        :param center: 相对 direction 的偏移坐标 [x, y]，与 bbox 参数二选一
         :param app: 可选的 App 实例，用于关联元素到应用
         :param name: 可选的元素名称，用于在 App 中注册
         """
+        # 验证 bbox 和 center 必须提供一个，且不能同时提供
+        if bbox is None and center is None:
+            raise ValueError("必须提供 bbox 或 center 参数之一")
+        if bbox is not None and center is not None:
+            raise ValueError("bbox 和 center 参数不能同时提供，请选择其中一个")
+
         # 处理 direction 参数，支持枚举和字符串
         if isinstance(direction, str):
             # 字符串转枚举
@@ -93,18 +114,31 @@ class Ele:
                 f"direction 必须是 Direction 枚举或字符串类型，得到的是: {type(direction)}"
             )
 
-        if not isinstance(location, (list, tuple)) or len(location) != 4:
-            raise ValueError(
-                f"location 必须是包含4个元素的列表或元组: [x, y, width, height]"
-            )
+        # 验证 bbox 参数
+        if bbox is not None:
+            if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
+                raise ValueError(
+                    f"bbox 必须是包含4个元素的列表或元组: [x, y, width, height]"
+                )
+            if not all(isinstance(val, (int, float)) for val in bbox):
+                raise ValueError(
+                    f"bbox 中的所有元素必须是数字: {bbox}"
+                )
 
-        if not all(isinstance(val, (int, float)) for val in location):
-            raise ValueError(
-                f"location 中的所有元素必须是数字: {location}"
-            )
+        # 验证 center 参数
+        if center is not None:
+            if not isinstance(center, (list, tuple)) or len(center) != 2:
+                raise ValueError(
+                    f"center 必须是包含2个元素的列表或元组: [x, y]"
+                )
+            if not all(isinstance(val, (int, float)) for val in center):
+                raise ValueError(
+                    f"center 中的所有元素必须是数字: {center}"
+                )
 
         self.direction = direction
-        self.location = location
+        self._bbox = bbox
+        self._center = center
         self._app = app
         self._name = name
 
@@ -117,50 +151,75 @@ class Ele:
 
     def __repr__(self) -> str:
         """返回元素的字符串表示"""
-        return f"Ele(direction={self.direction!r}, location={self.location!r})"
+        if self._bbox is not None:
+            return f"Ele(direction={self.direction!r}, bbox={self._bbox!r})"
+        else:
+            return f"Ele(direction={self.direction!r}, center={self._center!r})"
 
     def __str__(self) -> str:
         """返回元素的字符串表示"""
         return self.__repr__()
 
-    def get_position(self) -> Tuple[str, List[int]]:
+    def get_position(self) -> Tuple[str, Optional[List[int]], Optional[List[int]]]:
         """
         获取元素的位置信息
 
-        :return: (direction, location) 元组
+        :return: (direction, bbox, center) 元组
         """
-        return self.direction, self.location
+        return self.direction, self._bbox, self._center
 
     def to_dict(self) -> dict:
         """
         将元素转换为字典
 
-        :return: 包含 direction 和 location 的字典
+        :return: 包含 direction 和 bbox 或 center 的字典
         """
-        return {
-            "direction": self.direction.value if isinstance(self.direction, Direction) else self.direction,
-            "location": self.location
+        result = {
+            "direction": self.direction.value if isinstance(self.direction, Direction) else self.direction
         }
+        if self._bbox is not None:
+            result["bbox"] = self._bbox
+        if self._center is not None:
+            result["center"] = self._center
+        return result
 
     @property
-    def x(self) -> int:
-        """获取 x 坐标"""
-        return int(self.location[0])
+    def bbox(self) -> Optional[List[int]]:
+        """获取边界框"""
+        return self._bbox
 
     @property
-    def y(self) -> int:
-        """获取 y 坐标"""
-        return int(self.location[1])
+    def center_offset(self) -> Optional[List[int]]:
+        """获取中心偏移"""
+        return self._center
 
     @property
-    def width(self) -> int:
-        """获取宽度"""
-        return int(self.location[2])
+    def x(self) -> Optional[int]:
+        """获取 x 坐标（仅当使用 bbox 时可用）"""
+        if self._bbox is None:
+            raise AttributeError("x 属性仅在使用 bbox 参数时可用")
+        return int(self._bbox[0])
 
     @property
-    def height(self) -> int:
-        """获取高度"""
-        return int(self.location[3])
+    def y(self) -> Optional[int]:
+        """获取 y 坐标（仅当使用 bbox 时可用）"""
+        if self._bbox is None:
+            raise AttributeError("y 属性仅在使用 bbox 参数时可用")
+        return int(self._bbox[1])
+
+    @property
+    def width(self) -> Optional[int]:
+        """获取宽度（仅当使用 bbox 时可用）"""
+        if self._bbox is None:
+            raise AttributeError("width 属性仅在使用 bbox 参数时可用")
+        return int(self._bbox[2])
+
+    @property
+    def height(self) -> Optional[int]:
+        """获取高度（仅当使用 bbox 时可用）"""
+        if self._bbox is None:
+            raise AttributeError("height 属性仅在使用 bbox 参数时可用")
+        return int(self._bbox[3])
 
     def set_app(self, app: 'App', name: Optional[str] = None):
         """
@@ -244,13 +303,16 @@ class Elements:
     使用示例：
     ```python
     elements = Elements()
-    elements.add("close_button", Ele(direction="left_bottom", location=[20, 20, 50, 35]))
-    elements.add("open_button", Ele(direction="right_top", location=[10, 10, 40, 30]))
+    elements.add("close_button", Ele(direction="left_bottom", bbox=[20, 20, 50, 35]))
+    elements.add("open_button", Ele(direction="right_top", bbox=[10, 10, 40, 30]))
+
+    # 或者使用 center 参数
+    elements.add("cancel_button", Ele(direction="top_center", center=[100, 50]))
 
     # 或者使用字典初始化
     elements = Elements({
-        "close_button": Ele(direction="left_bottom", location=[20, 20, 50, 35]),
-        "open_button": Ele(direction="right_top", location=[10, 10, 40, 30])
+        "close_button": Ele(direction="left_bottom", bbox=[20, 20, 50, 35]),
+        "open_button": Ele(direction="right_top", bbox=[10, 10, 40, 30])
     })
     ```
     """
@@ -307,7 +369,7 @@ class Elements:
         """
         将元素集合转换为字典
 
-        :return: {name: {direction, location}} 字典
+        :return: {name: {direction, bbox}} 或 {name: {direction, center}} 字典
         """
         return {
             name: ele.to_dict()

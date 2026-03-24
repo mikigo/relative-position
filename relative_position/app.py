@@ -28,7 +28,13 @@ class App:
     # 使用 app.Ele() 创建元素
     new_file_btn = app.Ele(
         direction="left_top",
-        location=[20, 20, 50, 35]
+        bbox=[20, 20, 50, 35]
+    )
+
+    # 或者使用 center 参数
+    save_btn = app.Ele(
+        direction="left_top",
+        center=[30, 30]
     )
 
     # 操作元素
@@ -108,7 +114,13 @@ class App:
         self.add_element(element_name, element)
         return element_name
 
-    def Ele(self, direction: str, location: List[int], name: Optional[str] = None) -> Ele:
+    def Ele(
+        self,
+        direction: str,
+        bbox: Optional[List[int]] = None,
+        center: Optional[List[int]] = None,
+        name: Optional[str] = None
+    ) -> Ele:
         """
         创建并注册元素
 
@@ -116,10 +128,18 @@ class App:
         ```python
         app = App(appname="explorer.exe")
 
+        # 使用 bbox 参数
         new_file_btn = app.Ele(
             direction="left_top",
-            location=[20, 20, 50, 35]
+            bbox=[20, 20, 50, 35]
         )
+
+        # 或者使用 center 参数
+        save_btn = app.Ele(
+            direction="left_top",
+            center=[30, 30]
+        )
+
         new_file_btn.click()
         new_file_btn.right_click()
         new_file_btn.double_click()
@@ -129,11 +149,12 @@ class App:
         :param direction: 参考点方向
             可选值: left_bottom, left_top, right_top, right_bottom,
                      top_center, bottom_center, left_center, right_center, window_size
-        :param location: 相对位置坐标 [x, y, width, height]
+        :param bbox: 边界框坐标 [x, y, width, height]，与 center 参数二选一
+        :param center: 相对 direction 的偏移坐标 [x, y]，与 bbox 参数二选一
         :param name: 可选的元素名称，用于后续引用
         :return: Ele 对象
         """
-        element = Ele(direction=direction, location=location, app=self, name=name)
+        element = Ele(direction=direction, bbox=bbox, center=center, app=self, name=name)
         return element
 
     def get_center(self, element: Union[Ele, str]) -> tuple:

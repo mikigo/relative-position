@@ -42,8 +42,14 @@ app = App(appname="explorer.exe")  # Windows
 
 # 使用 app.Ele() 创建元素（自动关联到应用）
 new_file_btn = app.Ele(
-    direction="left_top",      # 或使用 Direction.LEFT_TOP 枚举
-    location=[20, 20, 50, 35]  # [x, y, width, height]
+    direction="left_top",     # 或使用 Direction.LEFT_TOP 枚举
+    bbox=[20, 20, 50, 35]    # [x, y, width, height]
+)
+
+# 或者使用 center 参数
+save_btn = app.Ele(
+    direction="left_top",
+    center=[30, 30]          # 相对 direction 的偏移坐标 [x, y]
 )
 
 # 操作元素
@@ -72,7 +78,7 @@ app = App(appname="explorer.exe")
 # 使用枚举定义元素（推荐）
 close_btn = app.Ele(
     direction=Direction.LEFT_BOTTOM,
-    location=[20, 20, 50, 35]
+    bbox=[20, 20, 50, 35]
 )
 
 # 枚举提供完整的类型检查和 IDE 自动补全
@@ -86,12 +92,15 @@ from relative_position import Ele, Elements, Direction
 
 # 创建元素集合
 elements = Elements()
-elements.add("close_button", Ele(direction=Direction.LEFT_BOTTOM, location=[20, 20, 50, 35]))
-elements.add("open_button", Ele(direction=Direction.RIGHT_TOP, location=[10, 10, 40, 30]))
+elements.add("close_button", Ele(direction=Direction.LEFT_BOTTOM, bbox=[20, 20, 50, 35]))
+elements.add("open_button", Ele(direction=Direction.RIGHT_TOP, bbox=[10, 10, 40, 30]))
+
+# 或者使用 center 参数
+elements.add("save_button", Ele(direction=Direction.TOP_CENTER, center=[100, 50]))
 
 # 像字典一样访问
 close_btn = elements["close_button"]
-print(f"方向: {close_btn.direction}, 位置: {close_btn.location}")
+print(f"方向: {close_btn.direction}, 边界框: {close_btn.bbox}")
 ```
 
 ## 🎨 参考点方向 (Direction)
@@ -119,17 +128,26 @@ print(f"方向: {close_btn.direction}, 位置: {close_btn.location}")
 ```python
 from relative_position import Ele, Direction
 
-# 使用枚举（推荐）
-btn = Ele(direction=Direction.LEFT_TOP, location=[20, 20, 50, 35])
+# 使用枚举和 bbox 参数（推荐）
+btn = Ele(direction=Direction.LEFT_TOP, bbox=[20, 20, 50, 35])
 
 # 使用字符串（向后兼容）
-btn = Ele(direction="left_top", location=[20, 20, 50, 35])
+btn = Ele(direction="left_top", bbox=[20, 20, 50, 35])
+
+# 使用 center 参数（直接指定偏移）
+btn = Ele(direction=Direction.LEFT_TOP, center=[30, 30])
 ```
+
+#### 参数
+- `direction`: 参考点方向（Direction 枚举或字符串）
+- `bbox`: 边界框坐标 `[x, y, width, height]`（与 center 二选一）
+- `center`: 相对 direction 的偏移坐标 `[x, y]`（与 bbox 二选一）
 
 #### 属性
 - `direction`: 参考点方向（Direction 枚举）
-- `location`: 坐标列表 `[x, y, width, height]`
-- `x`, `y`, `width`, `height`: 便捷属性访问器
+- `bbox`: 边界框坐标（当使用 bbox 参数时可用）
+- `center_offset`: 中心偏移坐标（当使用 center 参数时可用）
+- `x`, `y`, `width`, `height`: 便捷属性访问器（仅当使用 bbox 时可用）
 
 #### 方法（关联到 App 后可用）
 - `center()`: 获取元素中心坐标
@@ -139,7 +157,7 @@ btn = Ele(direction="left_top", location=[20, 20, 50, 35])
 - `hover()`: 鼠标悬停在元素上
 
 #### 其他方法
-- `get_position()`: 获取位置信息 `(direction, location)`
+- `get_position()`: 获取位置信息 `(direction, bbox, center)`
 - `to_dict()`: 转换为字典
 - `set_app(app, name=None)`: 关联元素到 App 实例
 
@@ -175,7 +193,10 @@ for name in elements:
 from relative_position import App
 
 app = App(appname="explorer.exe")
-btn = app.Ele(direction=Direction.LEFT_TOP, location=[20, 20, 50, 35])
+btn = app.Ele(direction=Direction.LEFT_TOP, bbox=[20, 20, 50, 35])
+
+# 或者使用 center 参数
+btn = app.Ele(direction=Direction.LEFT_TOP, center=[30, 30])
 ```
 
 #### 构造函数参数
@@ -187,7 +208,7 @@ btn = app.Ele(direction=Direction.LEFT_TOP, location=[20, 20, 50, 35])
 - `retry`: 重试次数
 
 #### 方法
-- `Ele(direction, location, name=None)`: 创建并注册元素
+- `Ele(direction, bbox=None, center=None, name=None)`: 创建并注册元素
 - `get_center(element)`: 获取元素中心坐标（支持 Ele 对象或元素名称）
 - `focus_window()`: 将应用窗口置顶并聚焦
 - `window_info()`: 获取窗口信息

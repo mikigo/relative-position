@@ -38,7 +38,7 @@ python -m build
   - `WINDOW_SIZE`
 
 - **App** (`relative_position/app.py`): Main interface for UI operations
-  - `Ele(direction, location, name=None)`: Create and register elements
+  - `Ele(direction, bbox=None, center=None, name=None)`: Create and register elements
   - `get_center(element)`: Get element center coordinates
   - `focus_window()`, `window_size()`, `window_center()`, etc.
 
@@ -84,13 +84,19 @@ Each element definition:
 ```python
 Ele(
     direction=Direction.LEFT_TOP,      # Reference point
-    location=[20, 20, 50, 35]  # [x, y, width, height]
+    bbox=[20, 20, 50, 35]            # [x, y, width, height]
+)
+
+# Or using center parameter (direct offset from direction)
+Ele(
+    direction=Direction.LEFT_TOP,
+    center=[30, 30]                  # [x, y] offset from reference point
 )
 
 # Or using string (backward compatible)
 Ele(
     direction="left_top",
-    location=[20, 20, 50, 35]
+    bbox=[20, 20, 50, 35]
 )
 ```
 
@@ -106,7 +112,7 @@ The library uses programmatic configuration (no INI file support):
 **Supported Config Types**:
 - `Ele` object: Single element
 - `Elements` object: Collection of elements
-- `dict`: Dictionary of `{name: {direction, location}}`
+- `dict`: Dictionary of `{name: {direction, bbox}}` or `{name: {direction, center}}`
 
 **Config Parsing**: Both `RelativePosition` classes (`_parse_config()`) convert these to internal dictionary format.
 

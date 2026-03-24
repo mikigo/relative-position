@@ -6,6 +6,6 @@ Windows平台窗口信息获取模块
 """
 
 from relative_position.windows.windows_wininfo import WindowsWindowInfo
-from relative_position.windows.main import ButtonCenter
+from relative_position.windows.main import RelativePosition
 
-__all__ = ['WindowsWindowInfo', 'ButtonCenter']
+__all__ = ['WindowsWindowInfo', 'RelativePosition']

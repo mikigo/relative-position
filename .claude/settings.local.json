@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python example_simple_api.py)",
+      "Bash(cd \"C:\\\\Users\\\\Administrator\\\\Desktop\\\\code\\\\relative-position\" && python -c \"from relative_position import Ele, App; print\\('导入成功'\\); app = App\\(appname='explorer.exe'\\); print\\('App 创建成功'\\); btn = app.Ele\\(direction='left_top', location=[20, 20, 50, 35]\\); print\\('Ele 创建成功'\\); print\\(f'Ele 对象: {btn}'\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\Administrator\\\\Desktop\\\\code\\\\relative-position\" && python -c \"\nfrom relative_position import Ele, App\n\napp = App\\(appname='explorer.exe'\\)\nbtn = app.Ele\\(direction='left_top', location=[20, 20, 50, 35]\\)\n\nprint\\('测试 Ele 的方法:'\\)\nprint\\(f'btn.x = {btn.x}'\\)\nprint\\(f'btn.y = {btn.y}'\\)\nprint\\(f'btn.width = {btn.width}'\\)\nprint\\(f'btn.height = {btn.height}'\\)\nprint\\(f'btn.get_position\\(\\) = {btn.get_position\\(\\)}'\\)\nprint\\(f'btn.to_dict\\(\\) = {btn.to_dict\\(\\)}'\\)\n\nprint\\('\\\\nEle 的方法都可用:'\\)\nprint\\('- btn.click\\(\\)'\\)\nprint\\('- btn.right_click\\(\\)'\\)\nprint\\('- btn.double_click\\(\\)'\\)\nprint\\('- btn.hover\\(\\)'\\)\nprint\\('- btn.center\\(\\)'\\)\nprint\\('\\\\n所有功能正常!'\\)\n\")",
+      "Bash(cd \"C:\\\\Users\\\\Administrator\\\\Desktop\\\\code\\\\relative-position\" && python test_architecture.py)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(python -c \"from relative_position import Ele, App, Direction; print\\('导入成功'\\); app = App\\(appname='explorer.exe'\\); print\\('App 创建成功'\\); btn = app.Ele\\(direction='left_top', bbox=[20, 20, 50, 35]\\); print\\('Ele 创建成功'\\); print\\(f'Ele 对象: {btn}'\\)\")",
+      "Bash(python -c \"from relative_position import Ele, App, Direction; print\\('导入成功'\\)\")",
+      "Bash(python -c \"from relative_position import Ele, App, Direction; app = App\\(appname='explorer.exe'\\); print\\('App 创建成功'\\); btn = app.Ele\\(direction='left_top', bbox=[20, 20, 50, 35]\\); print\\(f'Ele 创建成功: {btn}'\\); print\\(f'Ele bbox: {btn.bbox}'\\); print\\(f'Ele direction: {btn.direction}'\\)\")",
+      "Bash(python -c \"from relative_position import Ele, App, Direction; print\\('导入成功'\\); app = App\\(appname='explorer.exe'\\); print\\('App 创建成功'\\); btn = app.Ele\\(direction='left_top', bbox=[20, 20, 50, 35]\\); print\\(f'Ele 创建成功: {btn}'\\); print\\(f'Ele bbox: {btn.bbox}'\\); print\\(f'Ele direction: {btn.direction}'\\)\")",
+      "Bash(python -c \"from relative_position import Ele, App, Direction; app = App\\(appname='explorer.exe'\\); btn = app.Ele\\(direction='left_top', center=[30, 30]\\); print\\(f'Ele 创建成功: {btn}'\\); print\\(f'Ele center_offset: {btn.center_offset}'\\); print\\(f'Ele direction: {btn.direction}'\\)\")",
+      "Bash(python -c \"from relative_position import Ele; Ele\\(direction='left_top', bbox=[20, 20, 50, 35], center=[30, 30]\\)\")",
+      "Bash(python -c \"from relative_position import Ele; Ele\\(direction='left_top'\\)\")"
+    ]
+  }
+}
